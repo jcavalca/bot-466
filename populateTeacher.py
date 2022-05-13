@@ -232,12 +232,18 @@ def main():
         all_df = pd.concat([stat_df, cs_df], ignore_index=True)
         print(all_df)
         
-        # Connect to the database
-        connection = pymysql.connect(host='localhost',
+        # Connect to the database (using Joao's database)
+        '''connection = pymysql.connect(host='localhost',
                                  user='aarsky466',
                                  password='aarsky466985',
                                  database='aarsky466',
-                                 cursorclass=pymysql.cursors.DictCursor)
+                                 cursorclass=pymysql.cursors.DictCursor)'''
+        
+        connection = pymysql.connect(
+                user     = "jcavalca466",
+                password = "jcavalca466985",
+                host     = "localhost",
+                db       = "jcavalca466")
 
         # Populate Teacher SQL table
         with connection:
