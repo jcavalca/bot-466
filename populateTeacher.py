@@ -57,8 +57,9 @@ def read_stat_prof():
                 # 5) GET OFFICE HOURS                  
                 oh = values[4].find_all('strong')
                 oh = ", ".join([item.strip() for items in oh for item in items])
-                if oh.endswith(", TRF ("):
-                    oh = oh[:-len(", TRF (")]
+                oh = oh.replace(u'\xa0', ' ')
+                if oh.endswith(", TRF ("):
+                    oh = oh[:-len(", TRF (")]
                 if oh.endswith(", TRF"):
                     oh = oh[:-len(", TRF")]
 
@@ -232,14 +233,14 @@ def main():
         stat_df = read_stat_prof()
         cs_df = read_cs_prof()
         all_df = pd.concat([stat_df, cs_df], ignore_index=True)
-        print(all_df)
+        # print(all_df)
         
         # Connect to the database (using Joao's database)
-        '''connection = pymysql.connect(host='localhost',
+        """connection = pymysql.connect(host='localhost',
                                  user='aarsky466',
                                  password='aarsky466985',
                                  database='aarsky466',
-                                 cursorclass=pymysql.cursors.DictCursor)'''
+                                 cursorclass=pymysql.cursors.DictCursor)"""
         
         connection = pymysql.connect(
                 user     = "jcavalca466",
