@@ -1,4 +1,4 @@
-import pandas as pd, requests, sys
+import pandas as pd, numpy as np, requests, sys
 from bs4 import BeautifulSoup
 
 def read_stat_oh():
@@ -49,6 +49,7 @@ def read_stat_oh():
 
                 # 3) GET PHONE
                 phone = values[2].text.strip()
+                phone = '805' + phone.replace('-', '')
 
                 # 4) GET EMAIL
                 email = values[3].text.strip()
@@ -78,6 +79,10 @@ def read_cs_oh():
         df = df.applymap(lambda x: " ".join(x.strip().split()) if isinstance(x, str) else x)
         df['Email'] = df['Email'].str.replace('@', '')
         
+        # add full phone number (instead of last 5 digits)
+        df['Phone'].replace('none', np.nan, inplace=True)
+        df['Phone'] = "80575" + df.Phone.map(str, na_action='ignore')
+
         # convert Monday, Tuesday, Wednesday, ... to Office Hours
         df['OfficeHours'] = ""
         for i, row in df.iterrows():
@@ -145,8 +150,6 @@ def add_title(df, url):
         # see which teachers weren't included in the Instructors list and don't have a title
         # print(df.loc[df['Title'] == ""])      
         return df            
-  
-
         
 
 def main():
