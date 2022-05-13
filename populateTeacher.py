@@ -188,9 +188,8 @@ def add_title(df, url, updateNames):
                 row['Title'] = titlesByAlias.get(row['Email'])
             if row['Name'] in titlesByName.keys():
                 row['Title'] = titlesByName.get(row['Name'])
-            else:
-                continue
-        
+      
+        # change names from 'Last, First' -> 'First Last'  
         if updateNames:
             df['Name'] = df['Name'].apply(lambda x: " ".join(x.split(", ")[::-1]) if isinstance(x, str) else x)
 
@@ -213,12 +212,16 @@ def populate_teacher(connection, df):
         df = df.replace([''], [None])
         with connection.cursor() as cursor:
             # create Teacher table if it doesn't exist
-            cursor.execute("CREATE TABLE IF NOT EXISTS Teacher (Name VARCHAR(45) PRIMARY KEY, Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
+            cursor.execute("CREATE TABLE IF NOT EXISTS Teacher \
+            (Name VARCHAR(45) PRIMARY KEY, Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), \
+            Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
             
             # iterate through df and insert row by row
             for i, row in df.iterrows():
                 building, room = row['Office'].split("-")
-                sql = "INSERT INTO Teacher VALUES (" + sqlquote(row['Name']) + ", " + sqlquote(room) + ", " + sqlquote(building) + ", " + sqlquote(row['Phone']) + ", " + sqlquote(row['Email']) + ", " + sqlquote(row['Title']) + ", " + sqlquote(row['OfficeHours']) + ", " + sqlquote(row['HowToConnect']) + ");"
+                sql = "INSERT INTO Teacher VALUES (" + sqlquote(row['Name']) + ", " + sqlquote(room) + \
+                ", " + sqlquote(building) + ", " + sqlquote(row['Phone']) + ", " + sqlquote(row['Email']) + \
+                ", " + sqlquote(row['Title']) + ", " + sqlquote(row['OfficeHours']) + ", " + sqlquote(row['HowToConnect']) + ");"
                 cursor.execute(sql)
             
             connection.commit()
@@ -227,7 +230,6 @@ def populate_teacher(connection, df):
 def main():
         # Scrape professor info into a pandas df
         stat_df = read_stat_prof()
-        print(stat_df)
         cs_df = read_cs_prof()
         all_df = pd.concat([stat_df, cs_df], ignore_index=True)
         print(all_df)
