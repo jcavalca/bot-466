@@ -1,7 +1,7 @@
 import pandas as pd, numpy as np, requests, sys
 from bs4 import BeautifulSoup
 
-def read_stat_oh():
+def read_stat_prof():
         url = "https://statistics.calpoly.edu/content/directory#:~:text=F%204%3A10%2D6pm%20Zoom,See%20Canvas%20for%20Zoom%20Link."
         myRequest = requests.get(url)
         soup = BeautifulSoup(myRequest.text,"html.parser")
@@ -47,7 +47,7 @@ def read_stat_oh():
                 # 2) GET OFFICE 
                 office = values[1].text.strip()
 
-                # 3) GET PHONE
+                # 3) GET iPHONE
                 phone = values[2].text.strip()
                 phone = '805' + phone.replace('-', '')
 
@@ -57,16 +57,24 @@ def read_stat_oh():
                 # 5) GET OFFICE HOURS                  
                 oh = values[4].find_all('strong')
                 oh = ", ".join([item.strip() for items in oh for item in items])
+                if oh.endswith(", TRF ("):
+                    oh = oh[:-len(", TRF (")]
+                if oh.endswith(", TRF"):
+                    oh = oh[:-len(", TRF")]
 
                 # Add to datafame 
                 df.loc[len(df.index)] = [name, office, phone, email, oh]
 
         # remove '@calpoly.edu' from Email column
         df['Email'] = df['Email'].str.replace('@calpoly.edu', '') 
+        
+        # add title column
+        df = add_title(df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm", False)
+
         return df
 
 
-def read_cs_oh():
+def read_cs_prof():
         url = "http://frank.ored.calpoly.edu/CSSESpring2022.htm"
         df = pd.read_html(url, skiprows = 2, header=0)[0]
 
@@ -83,41 +91,78 @@ def read_cs_oh():
         df['Phone'].replace('none', np.nan, inplace=True)
         df['Phone'] = "80575" + df.Phone.map(str, na_action='ignore')
 
-        # convert Monday, Tuesday, Wednesday, ... to Office Hours
+        # convert Monday, Tuesday, Wednesday, ... to Office Hours (ex: MTW 3:00-4:00 pm)
         df['OfficeHours'] = ""
         for i, row in df.iterrows():
-            officehrs = ""
+            # key: time (ie 3:00-4:00 pm) and value: days of week (ie "MWF")
+            officehrs = {}
             if pd.notna(row['Monday']):
-                text = "M " + row['Monday'].replace(" ", "") + ", "
-                officehrs += text
+                key = clean_oh(row['Monday'])
+                if key:
+                    officehrs[key] = "M"
             if pd.notna(row['Tuesday']):
-                text = "T " + row['Tuesday'].replace(" ", "") + ", "
-                officehrs += text
+                key = clean_oh(row['Tuesday'])
+                if key:
+                    if key not in officehrs:
+                        officehrs[key] = "T"
+                    else:
+                        officehrs[key] = officehrs.get(key) + "T"
             if pd.notna(row['Wednesday']):
-                text = "W " + row['Wednesday'].replace(" ", "") + ", "
-                officehrs += text
+                key = clean_oh(row['Wednesday'])
+                if key: 
+                    if key not in officehrs:
+                        officehrs[key] = "W"
+                    else:
+                        officehrs[key] = officehrs.get(key) + "W"
             if pd.notna(row['Thursday']):
-                text = "R " + row['Thursday'].replace(" ", "") + ", "
-                officehrs += text
+                key = clean_oh(row['Thursday'])
+                if key:
+                    if key not in officehrs:
+                        officehrs[key] = "R"
+                    else:
+                        officehrs[key] = officehrs.get(key) + "R"
             if pd.notna(row['Friday']):
-                officehrs += "F " + row['Friday'].replace(" ", "")
-            officehrs = officehrs.rstrip(', ')
-            row['OfficeHours'] = officehrs
-        df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)       
- 
+                key = clean_oh(row['Friday'])
+                if key: 
+                    if key not in officehrs:
+                        officehrs[key] = "F"
+                    else:
+                        officehrs[key] = officehrs.get(key) + "F"
+
+            # create string from dict -> {'3:00-4:00pm': 'MWF', '10:00-12:00pm': 'TR'} -> "MWF 3:00-4:00pm, TR 10:00-12:00pm"
+            oh_string = ""
+            for key, value in officehrs.items():
+                text = value + " " + key + ", "
+                oh_string += text
+            oh_string = oh_string.rstrip(', ')
+            row['OfficeHours'] = oh_string
+
+        df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)
+
+        # add title column
+        df = add_title(df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm", True)
+
         return df
 
-def add_title(df, url):
+
+def clean_oh(txt):
+        clean_txt = txt.replace(" ", "").replace(":00", "")
+        # remove certain strings
+        clean_txt = clean_txt.replace("orbyappt.", "").replace("NoScheduledOfficeHours", "").replace("orbyappointment", "")
+        # add space after "M" -> '92-333:10-11AM14-213:3-4PM ' -> '92-333:10-11AM 14-213:3-4PM'
+        clean_txt = clean_txt.replace("M", "M ").strip()
+        return clean_txt            
+
+
+def add_title(df, url, updateNames):
         myRequest = requests.get(url)
         soup = BeautifulSoup(myRequest.text,"html.parser")
         table = soup.find_all('table')[0]
          
         # Store titles in two dictionaries: 1 were the keys are the names
         # and the 2nd were keys are the emails
-        # majority works just by name
-        # but also do by email since there are discreptancies in the names
-        # ie Chris Lupo vs Christopher Lupo
-        # can't just do by email since there is a discreptancy for Eckhardt,
+        # majority works just by email
+        # but can't just do by email since there is a discreptancy for Eckhardt,
         # Christian -> eckhardt vs cekhardt
         titlesByName = {}
         titlesByAlias = {}
@@ -140,25 +185,27 @@ def add_title(df, url):
         # add titles to df (either by name or by email)
         df["Title"] = ""
         for index, row in df.iterrows():
-            if row['Name'] in titlesByName.keys():
-                row['Title'] = titlesByName.get(row['Name'])
             if row['Email'] in titlesByAlias.keys():
                 row['Title'] = titlesByAlias.get(row['Email'])
+            if row['Name'] in titlesByName.keys():
+                row['Title'] = titlesByName.get(row['Name'])
             else:
                 continue
         
+        if updateNames:
+            df['Name'] = df['Name'].apply(lambda x: " ".join(x.split(", ")[::-1]) if isinstance(x, str) else x)
+
         # see which teachers weren't included in the Instructors list and don't have a title
         # print(df.loc[df['Title'] == ""])      
         return df            
         
 
 def main():
-        stat_df = read_stat_oh()
-        stat_df = add_title(stat_df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm")
+        stat_df = read_stat_prof()
         print(stat_df)
-        cs_df = read_cs_oh()
-        cs_df = add_title(cs_df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm")
+        cs_df = read_cs_prof()
         print(cs_df)
 
+        
 if __name__ == '__main__':
         main()
