@@ -1,4 +1,4 @@
-import pandas as pd, numpy as np, requests, sys
+import pandas as pd, numpy as np, requests, sys, pymysql.cursors
 from bs4 import BeautifulSoup
 
 def read_stat_prof():
@@ -136,14 +136,14 @@ def read_cs_prof():
                 oh_string += text
             oh_string = oh_string.rstrip(', ')
             row['OfficeHours'] = oh_string
-
+      
         df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)
+        df.rename(columns={'How to Connnect':'HowToConnect'}, inplace=True)
 
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm", True)
 
         return df
-
 
 def clean_oh(txt):
         clean_txt = txt.replace(" ", "").replace(":00", "")
@@ -152,7 +152,6 @@ def clean_oh(txt):
         # add space after "M" -> '92-333:10-11AM14-213:3-4PM ' -> '92-333:10-11AM 14-213:3-4PM'
         clean_txt = clean_txt.replace("M", "M ").strip()
         return clean_txt            
-
 
 def add_title(df, url, updateNames):
         myRequest = requests.get(url)
@@ -198,14 +197,40 @@ def add_title(df, url, updateNames):
         # see which teachers weren't included in the Instructors list and don't have a title
         # print(df.loc[df['Title'] == ""])      
         return df            
-        
+  
+def populate_teacher(connection, df):
+        with connection.cursor() as cursor:
+            # create Teacher table if it doesn't exist
+            cursor.execute("CREATE TABLE IF NOT EXISTS Teacher (Name VARCHAR(45) PRIMARY KEY, Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
+            
+            # iterate through df and insert row by row
+            for i, row in df.iterrows():
+                building, room = row['Office'].split("-")
+                sql = f"INSERT INTO Teacher VALUES ('{row['Name']}', '{room}', '{building}', '{row['Phone']}', '{row['Email']}', '{row['Title']}', '{row['OfficeHours']}', '{row['HowToConnect']}');"
+                cursor.execute(sql)
+            
+            connection.commit()
+
 
 def main():
+        # Scrape professor info into a pandas df
         stat_df = read_stat_prof()
         print(stat_df)
         cs_df = read_cs_prof()
-        print(cs_df)
-
+        all_df = pd.concat([stat_df, cs_df], ignore_index=True)
+        print(all_df)
         
+        # Connect to the database
+        connection = pymysql.connect(host='localhost',
+                                 user='aarsky466',
+                                 password='aarsky466985',
+                                 database='aarsky466',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+        # Populate Teacher SQL table
+        with connection:
+            populate_teacher(connection, all_df)
+
+
 if __name__ == '__main__':
         main()
