@@ -3,17 +3,28 @@ from bs4 import BeautifulSoup
 
 class Course:
     '''Represents our Course table'''
-    def __init__(self, prefix, number, title, units, description):
+    def __init__(self, prefix, number, title, units, prereq, description):
         '''Creates a Course'''
         self.prefix = prefix
         self.number = number
         self.title = title
         self.units = units
+        self.prereq = prereq
         self.description = description
 
     # inserts into DB
     def insert(self):
         '''Inserts Course into DB'''
+
+    def __repr__(self) -> str:
+        s0 = self.prefix + self.number+"\n"
+        s1 = "Prefix: " + self.prefix + "\n"
+        s2 = "Number: " + self.number + "\n"
+        s3 = "Title: " + self.title + "\n"
+        s4 = "Units: " + self.units + "\n"
+        s5 = "Prereq: " + self.prereq + "\n"
+        s6 = "Description: " + self.description + "\n"
+        return s0+s1+s2+s3+s4+s5+s6 
 
 class PreReq:
     '''Represents our PreReq table'''
