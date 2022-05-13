@@ -197,8 +197,20 @@ def add_title(df, url, updateNames):
         # see which teachers weren't included in the Instructors list and don't have a title
         # print(df.loc[df['Title'] == ""])      
         return df            
-  
+
+def sqlquote(value):
+    """Naive SQL quoting
+    All values except NULL are returned as SQL strings in single quotes,
+    with any embedded quotes doubled.
+    """
+    if value is None:
+         return 'NULL'
+    return "'{}'".format(str(value).replace("'", "''")) 
+
+ 
 def populate_teacher(connection, df):
+        df = df.replace([np.nan], [None])
+        df = df.replace([''], [None])
         with connection.cursor() as cursor:
             # create Teacher table if it doesn't exist
             cursor.execute("CREATE TABLE IF NOT EXISTS Teacher (Name VARCHAR(45) PRIMARY KEY, Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
@@ -206,7 +218,7 @@ def populate_teacher(connection, df):
             # iterate through df and insert row by row
             for i, row in df.iterrows():
                 building, room = row['Office'].split("-")
-                sql = f"INSERT INTO Teacher VALUES ('{row['Name']}', '{room}', '{building}', '{row['Phone']}', '{row['Email']}', '{row['Title']}', '{row['OfficeHours']}', '{row['HowToConnect']}');"
+                sql = "INSERT INTO Teacher VALUES (" + sqlquote(row['Name']) + ", " + sqlquote(room) + ", " + sqlquote(building) + ", " + sqlquote(row['Phone']) + ", " + sqlquote(row['Email']) + ", " + sqlquote(row['Title']) + ", " + sqlquote(row['OfficeHours']) + ", " + sqlquote(row['HowToConnect']) + ");"
                 cursor.execute(sql)
             
             connection.commit()
