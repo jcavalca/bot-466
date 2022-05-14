@@ -43,13 +43,13 @@ class PreReq:
 class Section:
     '''Represents our Section table'''
 
-    def __init__(self, course_prefix, course_number_prefix, number, teacher, section_type, days, start_time, end_time, room, building, quarter, year, enrolled, wait):
+    def __init__(self, course_prefix, course_number_prefix, number, teacher, section_type, days, start_time, end_time, room, building, quarter, year):
         '''Creates a Section'''
         self.course_prefix = course_prefix
         self.course_number_prefix = course_number_prefix
         self.number = number
         self.teacher = teacher
-        self.type = section_type
+        self.section_type = section_type
         self.days = days
         self.start_time = start_time
         self.end_time = end_time
@@ -57,9 +57,22 @@ class Section:
         self.building = building
         self.quarter = quarter
         self.year = year
-        self.enrolled = enrolled
-        self.wait = wait
 
+    def __repr__(self) -> str:
+        s1 = "Course Prefix: " + self.course_prefix + "\n"
+        s2 = "Course Number: " + self.course_number_prefix + "\n"
+        s2 = "Section Number: " + self.number + "\n"
+        s3 = "Teacher: " + self.teacher + "\n"
+        s4 = "Type: " + self.section_type + "\n"
+        s5 = "Days: " + self.days + "\n"
+        s6 = "Start Time: " + self.start_time + "\n"
+        s7 = "End Time: " + self.end_time + "\n"
+        s8 = "Room: " + self.room + "\n"
+        s9 = "Building: " + self.building + "\n"
+        s10 = "Quarter: " + self.quarter + "\n"
+        s11 = "Year: " + self.year + "\n"
+        return s1+s2+s3+s4+s5+s6+s7+s8+s9+s10+s11
+        
     # inserts into DB
     def insert(self):
         '''Inserts Section into DB'''
