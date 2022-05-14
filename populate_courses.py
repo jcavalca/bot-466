@@ -50,6 +50,6 @@ for course in stat_soup.find_all('div', attrs={'class':'courseblock'}):
 
     
 
-for key in courseDB.keys():
-    print(courseDB[key])
-    print()
+# for key in courseDB.keys():
+#     print(courseDB[key])
+#     print()

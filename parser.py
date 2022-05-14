@@ -2,12 +2,12 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pymysql
 
-connection = pymysql.connect(
-                user     = "jcavalca466",
-                password = "jcavalca466985",
-                host     = "localhost",
-                db       = "jcavalca466"
-)
+# connection = pymysql.connect(
+#                 user     = "jcavalca466",
+#                 password = "jcavalca466985",
+#                 host     = "localhost",
+#                 db       = "jcavalca466"
+# )
 
 class Course:
     '''Represents our Course table'''
@@ -19,10 +19,15 @@ class Course:
         self.units = units
         self.prereq = prereq
         self.description = description
+        self.insert()
 
     # inserts into DB
     def insert(self):
         '''Inserts Course into DB'''
+        with connection:
+            with connection.cursor() as cursor:
+                sql = "INSERT INTO Course (Prefix, Number, Title, Units, Prereq, Description) VALUES (%s, %s, %s, %s, %s, %s);"
+                cursor.execute(sql, [self.prefix, self.number, self.title, self.units, self.prereq, self.descriptioin])
 
     def __repr__(self) -> str:
         s0 = self.prefix + self.number+"\n"
