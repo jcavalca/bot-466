@@ -8,10 +8,20 @@ import re
 
 
 ACCEPTED_COURSE_PREFIXES= ["STAT", "CSC", "CPE"]
-SECTIONS_LINK_SPRING_CSM = "https://schedules.calpoly.edu/depts_76-CSM_curr.htm"
-SECTIONS_LINK_SPRING_CENG = "https://schedules.calpoly.edu/depts_52-CENG_curr.htm"
+SECTIONS_LINK_CSM = "https://schedules.calpoly.edu/depts_76-CSM_"
+SECTIONS_LINK_CENG = "https://schedules.calpoly.edu/depts_52-CENG_"
 
-links = [SECTIONS_LINK_SPRING_CSM, SECTIONS_LINK_SPRING_CENG]
+# current, last and next quarters
+times = ["curr.htm", "last.htm", "next.htm"]
+links = []
+
+for link in [SECTIONS_LINK_CSM, SECTIONS_LINK_CENG]:
+    for time in times:
+        links.append(link+time)
+
+links.append("https://schedules.calpoly.edu/depts_76-CSM_2228.htm") # Fall 2022
+links.append("https://schedules.calpoly.edu/depts_52-CENG_2228.htm") # Fall 2022
+
 
 def check_tag(element, tag):
     if element:
@@ -84,19 +94,32 @@ def check_section(section, year, quarter, default_teacher):
     )
     return section_object, teacher
 
+def getQuarterYear(soup):
+
+    seasons = ["Fall", "Winter", "Spring", "Summer"]
+    for season in seasons:
+        try:
+            quarter, _, year = soup.find('span', attrs={'class':'term' + season}).text.split()
+            break
+        except:
+            continue
+
+    return quarter, year 
 
 for link in links:
-    spring_request = requests.get(link)
+    request = requests.get(link)
 
-    spring_soup = BeautifulSoup(spring_request.text,"html.parser")
+    soup = BeautifulSoup(request.text,"html.parser")
 
     courseDB = {}
+    print(link)
 
-    quarter, _, year = spring_soup.find('span', attrs={'class':'termSpring'}).text.split()
+    quarter, year = getQuarterYear(soup)
+    
 
     teacher = None
     
-    for section in spring_soup.find_all('tr'):
+    for section in soup.find_all('tr'):
         
         section, teacher = check_section(section, year, quarter, teacher)
         if section:
@@ -105,4 +128,5 @@ for link in links:
 
 for key in courseDB.keys():
     print(courseDB[key])
+    courseDB[key].insert()
     print()

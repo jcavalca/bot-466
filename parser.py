@@ -1,5 +1,13 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+import pymysql
+
+connection = pymysql.connect(
+                user     = "jcavalca466",
+                password = "jcavalca466985",
+                host     = "localhost",
+                db       = "jcavalca466"
+)
 
 class Course:
     '''Represents our Course table'''
@@ -39,6 +47,7 @@ class PreReq:
     # inserts into DB
     def insert(self):
         '''Inserts PreReq into DB'''
+        
 
 class Section:
     '''Represents our Section table'''
@@ -76,6 +85,32 @@ class Section:
     # inserts into DB
     def insert(self):
         '''Inserts Section into DB'''
+        with connection.cursor() as cursor:
+
+            # Creates table, if necessary
+            cursor.execute("CREATE TABLE IF NOT EXISTS Section \
+                (CoursePrefix VARCHAR(65), CourseNumberPrefix INT, Number INT, \
+                Teacher VARCHAR(45), Type ENUM('Lab', 'Lec', 'Sem'), \
+                Days VARCHAR(5), StartTime VARCHAR(8), EndTime VARCHAR(8), \
+                Room INT, Building VARCHAR(15), Quarter VARCHAR(6), Year INT, \
+                PRIMARY KEY (CoursePrefix, CourseNumberPrefix, Number, Quarter, Year), FOREIGN KEY (CoursePrefix, CourseNumberPrefix) REFERENCES Course (Prefix, Number), FOREIGN KEY (Teacher) REFERENCES Teacher (Name) );"
+                )
+
+            cursor.commit()
+            
+            # Inserts into DB 
+            # (probably needs to do a check later, and only update if already existent)
+            insert_query = f"INSERT INTO Section VALUES ({sqlquote(self.course_prefix)} \
+                , {sqlquote(self.course_number_prefix)}, {sqlquote(self.number)}  \
+                , {sqlquote(self.teacher)}, {sqlquote(self.section_type)}  \
+                , {sqlquote(self.days)}, {sqlquote(self.start_time)}  \
+                , {sqlquote(self.end_time)}, {sqlquote(self.room)}  \
+                , {sqlquote(self.building)}, {sqlquote(self.quarter)}  \
+                , {sqlquote(self.year)}, {sqlquote(self.quarter)}  \
+                )"
+
+            cursor.execute(insert_query)
+            cursor.commit()
 
 class Teacher:
     '''Represents our Teacher table'''
@@ -94,6 +129,13 @@ class Teacher:
     # inserts into DB
     def insert(self):
         '''Inserts Teacher into DB'''
+        
 
-CSC_CATALOG_LINK = "https://catalog.calpoly.edu/coursesaz/csc/"
-STATS_CATALOG_LINK = "https://catalog.calpoly.edu/collegesandprograms/collegeofsciencemathematics/statistics/#courseinventory"
+def sqlquote(value):
+    """Naive SQL quoting
+    All values except NULL are returned as SQL strings in single quotes,
+    with any embedded quotes doubled.
+    """
+    if value is None:
+         return 'NULL'
+    return "'{}'".format(str(value).replace("'", "''")) 
