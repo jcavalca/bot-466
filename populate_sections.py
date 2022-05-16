@@ -112,7 +112,7 @@ for link in links:
     soup = BeautifulSoup(request.text,"html.parser")
 
     courseDB = {}
-    print(link)
+    # print(link)
 
     quarter, year = getQuarterYear(soup)
     
