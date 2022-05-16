@@ -123,10 +123,9 @@ for link in links:
         
         section, teacher = check_section(section, year, quarter, teacher)
         if section:
-            courseDB[section.course_prefix+section.course_number_prefix+f"-{section.number} {quarter}-{year}"] = section
+            courseDB[section.course_prefix+section.course_number_prefix+f"-{section.number} {quarter}-{year} {section.days}"] = section
 
 
-for key in courseDB.keys():
-    print(courseDB[key])
-    courseDB[key].insert()
-    print()
+# for key in courseDB.keys():
+#     print(courseDB[key])
+#     print()

@@ -49,7 +49,6 @@ for course in stat_soup.find_all('div', attrs={'class':'courseblock'}):
     courseDB[prefix+courseNum] = course_object
 
     
-
 # for key in courseDB.keys():
 #     print(courseDB[key])
 #     print()

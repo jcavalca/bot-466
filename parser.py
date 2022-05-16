@@ -2,12 +2,7 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pymysql
 
-# connection = pymysql.connect(
-#                 user     = "jcavalca466",
-#                 password = "jcavalca466985",
-#                 host     = "localhost",
-#                 db       = "jcavalca466"
-# )
+
 
 class Course:
     '''Represents our Course table'''
@@ -19,15 +14,22 @@ class Course:
         self.units = units
         self.prereq = prereq
         self.description = description
+        self.connection = pymysql.connect(
+                user     = "jcavalca466",
+                password = "jcavalca466985",
+                host     = "localhost",
+                db       = "jcavalca466", 
+                port     = 9090
+        )
         self.insert()
 
     # inserts into DB
     def insert(self):
         '''Inserts Course into DB'''
-        with connection:
-            with connection.cursor() as cursor:
+        with self.connection:
+            with self.connection.cursor() as cursor:
                 sql = "INSERT INTO Course (Prefix, Number, Title, Units, Prereq, Description) VALUES (%s, %s, %s, %s, %s, %s);"
-                cursor.execute(sql, [self.prefix, self.number, self.title, self.units, self.prereq, self.descriptioin])
+                cursor.execute(sql, [self.prefix, self.number, self.title, self.units, self.prereq, self.description])
 
     def __repr__(self) -> str:
         s0 = self.prefix + self.number+"\n"
@@ -37,22 +39,7 @@ class Course:
         s4 = "Units: " + self.units + "\n"
         s5 = "Prereq: " + self.prereq + "\n"
         s6 = "Description: " + self.description + "\n"
-        return s0+s1+s2+s3+s4+s5+s6 
-
-class PreReq:
-    '''Represents our PreReq table'''
-
-    def __init__(self, course_prefix, course_number, pre_req_prefix, pre_req_number):
-        '''Creates a PreReq'''
-        self.course_prefix = course_prefix
-        self.course_number = course_number
-        self.pre_req_prefix = pre_req_prefix
-        self.pre_req_number = pre_req_number
-
-    # inserts into DB
-    def insert(self):
-        '''Inserts PreReq into DB'''
-        
+        return s0+s1+s2+s3+s4+s5+s6         
 
 class Section:
     '''Represents our Section table'''
@@ -71,6 +58,15 @@ class Section:
         self.building = building
         self.quarter = quarter
         self.year = year
+        self.connection = pymysql.connect(
+                user     = "jcavalca466",
+                password = "jcavalca466985",
+                host     = "localhost",
+                db       = "jcavalca466", 
+                port     = 9090
+        )
+        self.insert()
+
 
     def __repr__(self) -> str:
         s1 = "Course Prefix: " + self.course_prefix + "\n"
@@ -90,32 +86,11 @@ class Section:
     # inserts into DB
     def insert(self):
         '''Inserts Section into DB'''
-        with connection.cursor() as cursor:
+        with self.connection.cursor() as cursor:
 
-            # Creates table, if necessary
-            cursor.execute("CREATE TABLE IF NOT EXISTS Section \
-                (CoursePrefix VARCHAR(65), CourseNumberPrefix INT, Number INT, \
-                Teacher VARCHAR(45), Type ENUM('Lab', 'Lec', 'Sem'), \
-                Days VARCHAR(5), StartTime VARCHAR(8), EndTime VARCHAR(8), \
-                Room INT, Building VARCHAR(15), Quarter VARCHAR(6), Year INT, \
-                PRIMARY KEY (CoursePrefix, CourseNumberPrefix, Number, Quarter, Year), FOREIGN KEY (CoursePrefix, CourseNumberPrefix) REFERENCES Course (Prefix, Number), FOREIGN KEY (Teacher) REFERENCES Teacher (Name) );"
-                )
-
-            cursor.commit()
-            
-            # Inserts into DB 
-            # (probably needs to do a check later, and only update if already existent)
-            insert_query = f"INSERT INTO Section VALUES ({sqlquote(self.course_prefix)} \
-                , {sqlquote(self.course_number_prefix)}, {sqlquote(self.number)}  \
-                , {sqlquote(self.teacher)}, {sqlquote(self.section_type)}  \
-                , {sqlquote(self.days)}, {sqlquote(self.start_time)}  \
-                , {sqlquote(self.end_time)}, {sqlquote(self.room)}  \
-                , {sqlquote(self.building)}, {sqlquote(self.quarter)}  \
-                , {sqlquote(self.year)}, {sqlquote(self.quarter)}  \
-                )"
-
-            cursor.execute(insert_query)
-            cursor.commit()
+            sql = "INSERT INTO Section (CoursePrefix, CourseNumberPrefix, Number, Teacher, Type, Days, StartTime, EndTime, Room, Building, Quarter, Year) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
+            cursor.execute(sql, [self.course_prefix, self.course_number_prefix, self.number, self.teacher, self.section_type, self.days, self.start_time, self.end_time, self.room, self.building, self.quarter, self.year])
+        self.connection.close()
 
 class Teacher:
     '''Represents our Teacher table'''
