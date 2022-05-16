@@ -6,6 +6,7 @@ connection = pymysql.connect(
                 password = "jcavalca466985",
                 host     = "localhost",
                 db       = "jcavalca466",
+                port     = 9090
 )
 
 
