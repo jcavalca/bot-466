@@ -39,6 +39,7 @@ def executeSelect(query):
 def main():
     print("Welcome to CalPAss!")
     print("Please ask any questions you have. When you are done, type exit")
+    tagger = Tagger()
 
     while True:
 
@@ -49,7 +50,6 @@ def main():
             break
         
         tokens = user_input.split()
-        tagger = Tagger()
         print(tagger.course_numbers)
         tags = tagger.tag(tokens)
 
