@@ -28,7 +28,7 @@ class Course:
         '''Inserts Course into DB'''
         with self.connection:
             with self.connection.cursor() as cursor:
-                sql = "INSERT INTO Course (Prefix, Number, Title, Units, Prereq, Description) VALUES (%s, %s, %s, %s, %s, %s);"
+                sql = "INSERT INTO Course (Prefix, Number, Title, Units, Prereq, CourseDesc) VALUES (%s, %s, %s, %s, %s, %s);"
                 cursor.execute(sql, [self.prefix, self.number, self.title, self.units, self.prereq, self.description])
 
     def __repr__(self) -> str:

@@ -3,25 +3,25 @@ import pymysql
 
 
 class Tagger():
-    def __init__(self) -> None:
-        self.teacher_names = getTeacherNames()
-        self.course_prefixes = getCoursePrefixes()
-        self.course_numbers = getCourseNumbers()
+    def __init__(self):
+        # Teacher Variables
+        self.teacher_names = self.getVariable("Name", "Teacher")
+        self.teacher_titles = self.getVariable("Title", "Teacher")
+        
+        # Course Variables
+        self.course_prefixes = self.getVariable("Prefix", "Course")
+        self.course_numbers = self.getVariable("Number", "Course")
+        self.course_titles = self.getVariable("Title", "Course")
+        self.course_descs = self.getVariable("CourseDesc", "Course")
 
-    def tag(self, tokens) -> None:
+        # Section Variables
+
+    def getVariable(self, variable, table):
+        vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
+        return [var[0] for var in vars]
+
+    def tag(self, tokens):
        pass
-
-def getCourseNumbers():
-    numbers = executeSelect("SELECT DISTINCT Number FROM Course")
-    return [number[0] for number in numbers]
-
-def getCoursePrefixes():
-    prefixes = executeSelect("SELECT DISTINCT Prefix FROM Course")
-    return [prefix[0] for prefix in prefixes]
-
-def getTeacherNames():
-    names = executeSelect("SELECT Name FROM Teacher")
-    return [name[0] for name in names]
 
 def executeSelect(query):
     connection = pymysql.connect(
@@ -50,7 +50,6 @@ def main():
             break
         
         tokens = user_input.split()
-        print(tagger.course_numbers)
         tags = tagger.tag(tokens)
 
 if __name__ == '__main__':
