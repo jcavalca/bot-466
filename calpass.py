@@ -1,13 +1,14 @@
 import string
 import pymysql
+from nltk.tokenize import wordpunct_tokenize
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import BernoulliNB
 
 
 corpus_training = {
-0: ["What's the room for Fooad's office hours?", "What room is Paul Anderson office hours?"],
-1: ["What building is Paul Anderson office hours?", "What is the office hours building for Paul Anderson?"],
+0: ["What's the room for [CSSE-FACULTY] office hours?", "What room is [CSSE-FACULTY] office hours?"],
+1: ["What building is [CSSE-FACULTY] office hours?", "What is the office hours building for [CSSE-FACULTY]7?"],
 } 
 
 class Tagger():
@@ -31,9 +32,13 @@ class Tagger():
         self.td = TfidfVectorizer(stop_words='english')
         y_train, X_train = zip(*corpus_training.items())
 
-        # combining example queries to feed one intent per document
+        # Combining example queries to feed one intent per document
         X_train = [' '.join(x) for x in X_train]
 
+        # Tokenize and combine to strip punctuation
+        X_train = [(' '.join(wordpunct_tokenize(x))).lower() for x in X_train]
+
+        # Creating training data
         X_train = self.td.fit_transform(X_train).toarray()
 
         # Creates and fits a Naives Bayes Classifier
@@ -69,15 +74,15 @@ def main():
 
     while True:
 
-        # Strips spaces and punctuation
-        user_input = input().strip().translate(str.maketrans('', '', string.punctuation))
+        # Gets user input
+        user_input = input()
 
         # Stop command
         if user_input.lower() == "exit":
             break
         
         # Tokenize input
-        tokens = user_input.split()
+        tokens = [token.lower() for token in wordpunct_tokenize(user_input)]
 
         # Figure out intent
         intent_class = tagger.predict(tokens)
