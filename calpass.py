@@ -1,6 +1,16 @@
 import string
 import pymysql
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import BernoulliNB
+
+
+corpus = {
+"What's the room for Fooad's office hours?":0,
+"What room is Paul Anderson office hours?":0,
+"What building is Paul Anderson office hours?" : 1,
+"What is the office hours building for Paul Anderson?" : 1,
+} 
 
 class Tagger():
     def __init__(self):
@@ -21,7 +31,15 @@ class Tagger():
         return [var[0] for var in vars]
 
     def tag(self, tokens):
-       pass
+        td = TfidfVectorizer(stop_words='english')
+        X_train, y_train = zip(*corpus.items())
+        X_train = td.fit_transform(X_train).toarray()
+        classifier = BernoulliNB()
+        classifier.fit(X_train, y_train)
+
+        X_test = td.transform([' '.join(tokens)])
+        print(classifier.predict(X_test))
+
 
 def executeSelect(query):
     connection = pymysql.connect(
@@ -46,10 +64,14 @@ def main():
         # Strips spaces and punctuation
         user_input = input().strip().translate(str.maketrans('', '', string.punctuation))
 
+        # Stop command
         if user_input.lower() == "exit":
             break
         
+        # Tokenize input
         tokens = user_input.split()
+
+        print(tokens)
         tags = tagger.tag(tokens)
 
 if __name__ == '__main__':

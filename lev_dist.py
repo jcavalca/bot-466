@@ -15,3 +15,5 @@ def lev_dist(str1, str2):
         prev_row = curr_row
     
     return prev_row[-1]
+
+print(lev_dist("Nico", "Naco"))
