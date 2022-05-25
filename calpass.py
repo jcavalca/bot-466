@@ -5,15 +5,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import BernoulliNB
 
 
-corpus = {
-"What's the room for Fooad's office hours?":0,
-"What room is Paul Anderson office hours?":0,
-"What building is Paul Anderson office hours?" : 1,
-"What is the office hours building for Paul Anderson?" : 1,
+corpus_training = {
+0: ["What's the room for Fooad's office hours?", "What room is Paul Anderson office hours?"],
+1: ["What building is Paul Anderson office hours?", "What is the office hours building for Paul Anderson?"],
 } 
 
 class Tagger():
     def __init__(self):
+        self.createClassifier()
+
         # Teacher Variables
         self.teacher_names = self.getVariable("Name", "Teacher")
         self.teacher_titles = self.getVariable("Title", "Teacher")
@@ -25,20 +25,28 @@ class Tagger():
         self.course_descs = self.getVariable("CourseDesc", "Course")
 
         # Section Variables
+    
+    def createClassifier(self):
+        # Perform TF-IDF on corpus
+        self.td = TfidfVectorizer(stop_words='english')
+        y_train, X_train = zip(*corpus_training.items())
+
+        # combining example queries to feed one intent per document
+        X_train = [' '.join(x) for x in X_train]
+
+        X_train = self.td.fit_transform(X_train).toarray()
+
+        # Creates and fits a Naives Bayes Classifier
+        self.classifier = BernoulliNB()
+        self.classifier.fit(X_train, y_train)
 
     def getVariable(self, variable, table):
         vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
         return [var[0] for var in vars]
 
-    def tag(self, tokens):
-        td = TfidfVectorizer(stop_words='english')
-        X_train, y_train = zip(*corpus.items())
-        X_train = td.fit_transform(X_train).toarray()
-        classifier = BernoulliNB()
-        classifier.fit(X_train, y_train)
-
-        X_test = td.transform([' '.join(tokens)])
-        print(classifier.predict(X_test))
+    def predict(self, tokens):
+        X_test = self.td.transform([' '.join(tokens)])
+        return self.classifier.predict(X_test)[0]
 
 
 def executeSelect(query):
@@ -71,8 +79,12 @@ def main():
         # Tokenize input
         tokens = user_input.split()
 
+        # Figure out intent
+        intent_class = tagger.predict(tokens)
+
         print(tokens)
-        tags = tagger.tag(tokens)
+        print(intent_class)
 
 if __name__ == '__main__':
     main()
+
