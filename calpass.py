@@ -14,6 +14,13 @@ class Tagger():
     def __init__(self):
         self.createClassifier()
 
+        '''
+        for teacher names the tokens are going to be separate for first and last names so we need a way to match those.
+        Potentially seperate them in 
+
+        need to make sure everything in these lists are lowercase so they match in the mapping function
+        '''
+
         # Teacher Variables
         self.teacher_names = self.getVariable("Name", "Teacher")
         self.teacher_titles = self.getVariable("Title", "Teacher")
@@ -25,6 +32,57 @@ class Tagger():
         self.course_descs = self.getVariable("CourseDesc", "Course")
 
         # Section Variables
+
+    '''
+    input
+    variables: special words (ie. "Paul Anderson", "building 192", "CSC 357")
+    query_match: answer chosen by classifier (ie. ")
+
+    output
+    answer: the answer to the question originally asked in string form.
+    '''
+    def get_answer(self, variables: dict, query_match: str) -> str:
+        split_q = query_match.split(" ")
+        for i, tok in enumerate(split_q):
+            try:
+                var_match = variables[tok]
+                split_q[i] = var_match
+            except KeyError:
+                if '[' in tok and ']' in tok:
+                    raise Exception("uncaught variable:", tok)
+        return " ".join(split_q)
+
+
+    '''
+    input
+    usr_in: string from the user input
+
+    output
+    map: dictionary matching words to variables (ie. {'[CSSE-Faculty]':'Paul Anderson'})
+    '''
+    def key_word_map(self, tokens: list) -> dict:
+        var_map = {}
+        variables = ['[CSSE-Faculty]','[STAT-Faculty]','[PREFIX]','[CourseNum]','[Course]','[CourseType]','[Section]','[Building]','[Room]','[Day]','[Time]','[Subject]','[Quarter]','[Year]','[Enrolled]','[Wait]','[Job-Title]']
+
+
+        num_tok = len(tokens)
+        for i, token in enumerate(tokens):
+            token = token.lower()
+            next_t = ""
+            if (i + 1) < num_tok:
+                next_t = tokens[i+1]
+            name = token+" "+next_t
+            if name in self.teacher_names: # need a way to distinguish between CSSE-Faculty and STAT=Faculty
+                var_map['[CSSE-Faculty]'] = name
+            elif token in self.teacher_titles:
+                var_map['[Job-Title]'] = token
+            elif token in self.course_prefixes:
+                var_map['[PREFIX]'] = token
+            elif token in self.course_numbers:
+                var_map['[CourseNum]'] = token
+            elif token in self.course_titles:
+                var_map['[Course]'] = token
+        return var_map
     
     def createClassifier(self):
         # Perform TF-IDF on corpus
@@ -66,6 +124,8 @@ def main():
     print("Welcome to CalPAss!")
     print("Please ask any questions you have. When you are done, type exit")
     tagger = Tagger()
+
+    print(tagger.teacher_names)
 
     while True:
 
