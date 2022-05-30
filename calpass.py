@@ -1,24 +1,18 @@
 import string
 import pymysql
 from nltk.tokenize import wordpunct_tokenize
-
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import BernoulliNB
 
+from models import Bagging, variables, corpus_training
 
-corpus_training = {
-0: ["What's the room for [CSSE-FACULTY] office hours?", "What room is [CSSE-FACULTY] office hours?"],
-1: ["What building is [CSSE-FACULTY] office hours?", "What is the office hours building for [CSSE-FACULTY]7?"],
-} 
-
-class Tagger():
+class Tagger:
     def __init__(self):
         self.createClassifier()
 
         # Teacher Variables
         self.teacher_names = self.getVariable("Name", "Teacher")
         self.teacher_titles = self.getVariable("Title", "Teacher")
-        
+
         # Course Variables
         self.course_prefixes = self.getVariable("Prefix", "Course")
         self.course_numbers = self.getVariable("Number", "Course")
@@ -26,23 +20,27 @@ class Tagger():
         self.course_descs = self.getVariable("CourseDesc", "Course")
 
         # Section Variables
-    
+
     def createClassifier(self):
         # Perform TF-IDF on corpus
-        self.td = TfidfVectorizer(stop_words='english')
+        self.td = TfidfVectorizer(stop_words="english")
         y_train, X_train = zip(*corpus_training.items())
 
         # Combining example queries to feed one intent per document
-        X_train = [' '.join(x) for x in X_train]
+        X_train = [" ".join(x) for x in X_train]
+        
+        # Removing variable names from testing data
+        for var in variables:
+            X_train = [x.replace(var, "") for x in X_train]
 
         # Tokenize and combine to strip punctuation
-        X_train = [(' '.join(wordpunct_tokenize(x))).lower() for x in X_train]
+        X_train = [(" ".join(wordpunct_tokenize(x))).lower() for x in X_train]
 
         # Creating training data
         X_train = self.td.fit_transform(X_train).toarray()
 
         # Creates and fits a Naives Bayes Classifier
-        self.classifier = BernoulliNB()
+        self.classifier = Bagging()
         self.classifier.fit(X_train, y_train)
 
     def getVariable(self, variable, table):
@@ -50,22 +48,23 @@ class Tagger():
         return [var[0] for var in vars]
 
     def predict(self, tokens):
-        X_test = self.td.transform([' '.join(tokens)])
+        X_test = self.td.transform([" ".join(tokens)])
         return self.classifier.predict(X_test)[0]
 
 
 def executeSelect(query):
     connection = pymysql.connect(
-                user     = "jcavalca466",
-                password = "jcavalca466985",
-                host     = "localhost",
-                db       = "jcavalca466",
-                port     = 9090 # comment out this if running on frank
+        user="jcavalca466",
+        password="jcavalca466985",
+        host="localhost",
+        db="jcavalca466",
+        port=9090,  # comment out this if running on frank
     )
     with connection.cursor() as cursor:
         cursor.execute(query)
     connection.commit()
     return cursor.fetchall()
+
 
 def main():
     print("Welcome to CalPAss!")
@@ -80,7 +79,7 @@ def main():
         # Stop command
         if user_input.lower() == "exit":
             break
-        
+
         # Tokenize input
         tokens = [token.lower() for token in wordpunct_tokenize(user_input)]
 
@@ -90,6 +89,6 @@ def main():
         print(tokens)
         print(intent_class)
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()
