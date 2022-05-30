@@ -25,12 +25,12 @@ variables = [
 
 corpus_training = {
     0: [
-        "What's the room for [CSSE-FACULTY] office hours?",
-        "What room is [CSSE-FACULTY] office hours?",
+        "What's the room for [CSSE-Faculty] office hours?",
+        "What room is [CSSE-Faculty] office hours?",
     ],
     1: [
-        "What building is [CSSE-FACULTY] office hours?",
-        "What is the office hours building for [CSSE-FACULTY]7?",
+        "What building is [CSSE-Faculty] office hours?",
+        "What is the office hours building for [CSSE-Faculty]?",
     ],
 }
 

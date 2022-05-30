@@ -28,6 +28,10 @@ class Tagger:
 
         # Combining example queries to feed one intent per document
         X_train = [" ".join(x) for x in X_train]
+        
+        # Removing variable names from testing data
+        for var in variables:
+            X_train = [x.replace(var, "") for x in X_train]
 
         # Tokenize and combine to strip punctuation
         X_train = [(" ".join(wordpunct_tokenize(x))).lower() for x in X_train]
