@@ -124,9 +124,6 @@ def main():
     print("Welcome to CalPAss!")
     print("Please ask any questions you have. When you are done, type exit")
     tagger = Tagger()
-
-    print(tagger.teacher_names)
-
     while True:
 
         # Strips spaces and punctuation
@@ -141,9 +138,6 @@ def main():
 
         # Figure out intent
         intent_class = tagger.predict(tokens)
-
-        print(tokens)
-        print(intent_class)
 
 if __name__ == '__main__':
     main()
