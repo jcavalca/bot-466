@@ -62,7 +62,7 @@ class Tagger():
     '''
     def key_word_map(self, tokens: list) -> dict:
         var_map = {}
-        variables = ['[CSSE-Faculty]','[STAT-Faculty]','[PREFIX]','[CourseNum]','[Course]','[CourseType]','[Section]','[Building]','[Room]','[Day]','[Time]','[Subject]','[Quarter]','[Year]','[Enrolled]','[Wait]','[Job-Title]']
+        # variables = ['[CSSE-Faculty]','[STAT-Faculty]','[PREFIX]','[CourseNum]','[Course]','[CourseType]','[Section]','[Building]','[Room]','[Day]','[Time]','[Subject]','[Quarter]','[Year]','[Enrolled]','[Wait]','[Job-Title]']
 
 
         num_tok = len(tokens)
