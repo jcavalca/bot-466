@@ -9,7 +9,7 @@ def read_stat_prof():
         admin = tables[0]
         profs = tables[1]
 
-        df_cols = ['Name', 'Office', 'Phone', 'Email', 'OfficeHours']
+        df_cols = ['Name', 'Office', 'Phone', 'Email', 'OfficeHours', 'Department']
         df = pd.DataFrame(columns = df_cols)
 
         arows = admin.find_all('tr')
@@ -63,8 +63,11 @@ def read_stat_prof():
                 if oh.endswith(", TRF"):
                     oh = oh[:-len(", TRF")]
 
+                # 6) ADD DEPARTMENT
+                dept = 'STAT'
+
                 # Add to datafame 
-                df.loc[len(df.index)] = [name, office, phone, email, oh]
+                df.loc[len(df.index)] = [name, office, phone, email, oh, dept]
 
         # remove '@calpoly.edu' from Email column
         df['Email'] = df['Email'].str.replace('@calpoly.edu', '') 
@@ -141,6 +144,9 @@ def read_cs_prof():
         df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)
         df.rename(columns={'How to Connnect':'HowToConnect'}, inplace=True)
 
+        # add department column
+        df['Department'] = 'CSSE'
+
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm", True)
 
@@ -214,13 +220,13 @@ def populate_teacher(connection, df):
         with connection.cursor() as cursor:
             # create Teacher table if it doesn't exist
             cursor.execute("CREATE TABLE IF NOT EXISTS Teacher \
-            (Name VARCHAR(45) PRIMARY KEY, Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), \
+            (Name VARCHAR(45) PRIMARY KEY, Department VARCHAR(5), Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), \
             Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
             
             # iterate through df and insert row by row
             for i, row in df.iterrows():
                 building, room = row['Office'].split("-")
-                sql = "INSERT INTO Teacher VALUES (" + sqlquote(row['Name']) + ", " + sqlquote(room) + \
+                sql = "INSERT INTO Teacher VALUES (" + sqlquote(row['Name']) + ", " + sqlquote(row['Department']) + ", " + sqlquote(room) + \
                 ", " + sqlquote(building) + ", " + sqlquote(row['Phone']) + ", " + sqlquote(row['Email']) + \
                 ", " + sqlquote(row['Title']) + ", " + sqlquote(row['OfficeHours']) + ", " + sqlquote(row['HowToConnect']) + ");"
                 cursor.execute(sql)
@@ -233,7 +239,7 @@ def main():
         stat_df = read_stat_prof()
         cs_df = read_cs_prof()
         all_df = pd.concat([stat_df, cs_df], ignore_index=True)
-        # print(all_df)
+        print(all_df)
         
         # Connect to the database (using Joao's database)
         """connection = pymysql.connect(host='localhost',
@@ -246,9 +252,7 @@ def main():
                 user     = "jcavalca466",
                 password = "jcavalca466985",
                 host     = "localhost",
-                db       = "jcavalca466", 
-                port     = 9090
-        )
+                db       = "jcavalca466")
 
         # Populate Teacher SQL table
         with connection:
