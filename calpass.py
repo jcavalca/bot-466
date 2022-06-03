@@ -60,7 +60,7 @@ class Tagger:
     output
     map: dictionary matching words to variables (ie. {'[CSSE-Faculty]':'Paul Anderson'})
     '''
-    def key_word_map(self, tokens: list, usr_in: string) -> dict:
+    def key_word_map(self, tokens: list, usr_in: string):
         var_map = {}
         reverse_var_map = {}
         for i, token in enumerate(tokens):
@@ -78,12 +78,20 @@ class Tagger:
                     num += char
                 else:
                     prefix += char
-            if name in self.csse_teacher_names: 
-                var_map['[CSSE-Faculty]'] = name
+            if name in [name.lower() for name in self.csse_teacher_names]:
                 reverse_var_map[name] = '[CSSE-Faculty]'
-            elif name in self.csse_teacher_names: 
-                var_map['[STAT-Faculty]'] = name
+                name = name.split(" ")
+                name[0] = name[0][0].upper()+name[0][1:]
+                name[1] = name[1][0].upper()+name[1][1:]
+                name = " ".join(name)
+                var_map['[CSSE-Faculty]'] = name
+            elif name in self.csse_teacher_names:
                 reverse_var_map[name] = '[STAT-Faculty]'
+                name = name.split(" ")
+                name[0] = name[0][0].upper()+name[0][1:]
+                name[1] = name[1][0].upper()+name[1][1:]
+                name = " ".join(name)
+                var_map['[STAT-Faculty]'] = name
             elif token in self.teacher_titles:
                 var_map['[Job-Title]'] = token
                 reverse_var_map[token] = '[Job-Title]'
@@ -100,15 +108,12 @@ class Tagger:
                 var_map['[PREFIX]'] = prefix
                 var_map['CourseNum'] = num
                 reverse_var_map[token] = '[PREFIX][CourseNum]'
-            
 
-        word_str = "".join(char.lower() for char in usr_in if char.isalnum() or char == " ").split(" ")
-        var_str = ""
-        for word in word_str:
-            if word in reverse_var_map.keys():
-                var_str += reverse_var_map[word]
-            else:
-                var_str += word
+
+        var_str = "".join(list(char.lower() for char in usr_in))
+        for tok in reverse_var_map.keys():
+            var_str = var_str.replace(tok, reverse_var_map[tok])
+
         return var_str, var_map
     
     def createClassifier(self):
