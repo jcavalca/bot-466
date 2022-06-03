@@ -64,6 +64,7 @@ class Tagger:
     def key_word_map(self, tokens: list, usr_in: string):
         var_map = {}
         reverse_var_map = {}
+        var_str = "".join(list(char.lower() for char in usr_in))
         for i, token in enumerate(tokens):
             token = token.lower()
             # create possible name (ie "Paul Anderson" with a space)
@@ -109,9 +110,14 @@ class Tagger:
                 var_map['[PREFIX]'] = prefix
                 var_map['CourseNum'] = num
                 reverse_var_map[token] = '[PREFIX][CourseNum]'
+        
+        for course in self.course_titles:
+            c_title = "".join(char for char in course if char.isalnum() or char == " ")
+            course = "".join(char.lower() for char in c_title)
+            if course.lower() in var_str:
+                var_map['[Course]'] = c_title
+                reverse_var_map[course] = '[Course]'
 
-
-        var_str = "".join(list(char.lower() for char in usr_in))
         for tok in reverse_var_map.keys():
             var_str = var_str.replace(tok, reverse_var_map[tok])
 
