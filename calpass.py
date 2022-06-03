@@ -1,5 +1,6 @@
 from ast import keyword
 from audioop import reverse
+from lib2to3.pgen2 import token
 import string
 import pymysql
 from nltk.tokenize import wordpunct_tokenize
@@ -119,10 +120,6 @@ class Tagger:
         # Combining example queries to feed one intent per document
         X_train = [" ".join(x) for x in X_train]
         
-        # Removing variable names from testing data
-        for var in variables:
-            X_train = [x.replace(var, "") for x in X_train]
-
         # Tokenize and combine to strip punctuation
         X_train = [(" ".join(wordpunct_tokenize(x))).lower() for x in X_train]
 
@@ -137,9 +134,9 @@ class Tagger:
         if whereVar is None and whereVal is None:
             vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
         else:
-            vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table} WHERE {whereVar} = {whereVal}""")
+            vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table} WHERE {whereVar} = "{whereVal}" """)
 
-        return [var[0] for var in vars]
+        return [str(var[0]).lower() for var in vars if var[0]]
 
     def predict(self, tokens):
         X_test = self.td.transform([" ".join(tokens)])
@@ -174,7 +171,10 @@ def main():
 
         # Tokenize input
         tokens = [token.lower() for token in wordpunct_tokenize(user_input)]
-        var_string, var_map = key_word_map(tokens)
+        
+        print(tokens, user_input)
+        var_string, var_map = tagger.key_word_map(tokens, user_input)
+        print(var_string, var_map)
 
         # Figure out intent
         intent_class = tagger.predict(var_string)
