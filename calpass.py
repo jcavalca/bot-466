@@ -1,3 +1,5 @@
+from ast import keyword
+from audioop import reverse
 import string
 import pymysql
 from nltk.tokenize import wordpunct_tokenize
@@ -17,7 +19,9 @@ class Tagger:
         '''
 
         # Teacher Variables
-        self.teacher_names = self.getVariable("Name", "Teacher")
+        self.all_teacher_names = self.getVariable("Name", "Teacher")
+        self.stat_teacher_names = self.getVariable("Name", "Teacher", "Department", "STAT")
+        self.csse_teacher_names = self.getVariable("Name", "Teacher", "Department", "CSSE")
         self.teacher_titles = self.getVariable("Title", "Teacher")
 
         # Course Variables
@@ -50,34 +54,62 @@ class Tagger:
 
     '''
     input
-    usr_in: string from the user input
+    tokens: tokenized input string
+    usr_in: original string from the user input
 
     output
     map: dictionary matching words to variables (ie. {'[CSSE-Faculty]':'Paul Anderson'})
     '''
-    def key_word_map(self, tokens: list) -> dict:
+    def key_word_map(self, tokens: list, usr_in: string) -> dict:
         var_map = {}
-        # variables = ['[CSSE-Faculty]','[STAT-Faculty]','[PREFIX]','[CourseNum]','[Course]','[CourseType]','[Section]','[Building]','[Room]','[Day]','[Time]','[Subject]','[Quarter]','[Year]','[Enrolled]','[Wait]','[Job-Title]']
-
-
-        num_tok = len(tokens)
+        reverse_var_map = {}
         for i, token in enumerate(tokens):
             token = token.lower()
+            # create possible name (ie "Paul Anderson" with a space)
             next_t = ""
-            if (i + 1) < num_tok:
+            if (i + 1) < len(tokens):
                 next_t = tokens[i+1]
             name = token+" "+next_t
-            if name in self.teacher_names: # need a way to distinguish between CSSE-Faculty and STAT=Faculty
+            # create possible PREFIX, CourseNum combo (ie "csc466" with no space)
+            prefix = ""
+            num = ""
+            for char in token:
+                if char.isdigit:
+                    num += char
+                else:
+                    prefix += char
+            if name in self.csse_teacher_names: 
                 var_map['[CSSE-Faculty]'] = name
+                reverse_var_map[name] = '[CSSE-Faculty]'
+            elif name in self.csse_teacher_names: 
+                var_map['[STAT-Faculty]'] = name
+                reverse_var_map[name] = '[STAT-Faculty]'
             elif token in self.teacher_titles:
                 var_map['[Job-Title]'] = token
+                reverse_var_map[token] = '[Job-Title]'
             elif token in self.course_prefixes:
                 var_map['[PREFIX]'] = token
+                reverse_var_map[token] = '[PREFIX]'
             elif token in self.course_numbers:
                 var_map['[CourseNum]'] = token
+                reverse_var_map[token] = '[CourseNum]'
             elif token in self.course_titles:
                 var_map['[Course]'] = token
-        return var_map
+                reverse_var_map[token] = '[Course]'
+            elif prefix in self.course_prefixes and num in self.course_numbers:
+                var_map['[PREFIX]'] = prefix
+                var_map['CourseNum'] = num
+                reverse_var_map[token] = '[PREFIX][CourseNum]'
+            
+
+        word_str = "".join(char.lower() for char in usr_in if char.isalnum() or char == " ").split(" ")
+        var_str = ""
+        for word in word_str:
+            if word in reverse_var_map.keys():
+                var_str += reverse_var_map[word]
+            else:
+                var_str += word
+        return var_str, var_map
     
     def createClassifier(self):
         # Perform TF-IDF on corpus
@@ -101,8 +133,12 @@ class Tagger:
         self.classifier = Bagging()
         self.classifier.fit(X_train, y_train)
 
-    def getVariable(self, variable, table):
-        vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
+    def getVariable(self, variable, table, whereVar=None, whereVal=None):
+        if whereVar is None and whereVal is None:
+            vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
+        else:
+            vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table} WHERE {whereVar} = {whereVal}""")
+
         return [var[0] for var in vars]
 
     def predict(self, tokens):
@@ -123,9 +159,8 @@ def executeSelect(query):
     connection.commit()
     return cursor.fetchall()
 
-
 def main():
-    print("Welcome to CalPAss!")
+    print("Welcome to CalPass!")
     print("Please ask any questions you have. When you are done, type exit")
     tagger = Tagger()
     while True:
@@ -139,9 +174,10 @@ def main():
 
         # Tokenize input
         tokens = [token.lower() for token in wordpunct_tokenize(user_input)]
+        var_string, var_map = key_word_map(tokens)
 
         # Figure out intent
-        intent_class = tagger.predict(tokens)
+        intent_class = tagger.predict(var_string)
 
 if __name__ == "__main__":
     main()
