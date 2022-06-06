@@ -189,6 +189,14 @@ def main():
 
         # Figure out intent
         intent_class = tagger.predict(var_string)
+        
+        # Return answer
+        if intent_class in list(0, 1, 7, 11, 12, 13, 18):
+            fetch_answer.fetch_teacher_answer(var_map, intent_class)
+        if intent_class in list(2, 3, 4, 5, 6, 8, 15, 16, 17, 19):
+            fetch_answer.fetch_section_answer(var_map, intent_class)
+        if intent_class in list(9, 10, 14):
+            fetch_answer.fetch_course_answer(var_map, intent_class)
 
 if __name__ == "__main__":
     main()
