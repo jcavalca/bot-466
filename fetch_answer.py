@@ -28,7 +28,7 @@ def fetch_teacher_answer(var_map, intent_class):
 
     # sql query
     sql = f"""SELECT {var} FROM Teacher WHERE Name = '{name}'"""
-    answer = list(map(lambda d: d[f"'{var}'"], calpass.executeSelect(sql)))
+    answer = list(map(lambda d: d[0], calpass.executeSelect(sql)))
 
     # print output
     if len(answer) == 0:
@@ -59,7 +59,10 @@ def fetch_section_answer(var_map, intent_class):
         sql = f"""SELECT CoursePrefix, CourseNumberPrefix, Number FROM Section 
                     WHERE Teacher = '{Faculty}'
                     AND Quarter = '{Quarter}'"""
-        answer = list(map(lambda d: (d['CoursePrefix'], d['CourseNumberPrefix'], d['Number']), calpass.executeSelect(sql)))
+        # answer = list(map(lambda d: (d['CoursePrefix'], d['CourseNumberPrefix'], d['Number']), calpass.executeSelect(sql)))
+        answer = list()
+        for row in calpass.executeSelect(sql):
+            answer.append(tuple(row['CoursePrefix'], row['CourseNumberPrefix'], row['Number']))
         if len(answer) == 0:
             print("Sorry, I don't know the answer.")
         else:
@@ -83,7 +86,10 @@ def fetch_section_answer(var_map, intent_class):
             if intent_class == 6:
                 add = f"""AND EndTime = '{Time}'"""
             sql = f"""{generic_sql}\t{add}"""
-            answer = list(map(lambda d: (d['CoursePrefix'], d['CourseNumberPrefix']), calpass.executeSelect(sql)))
+            # answer = list(map(lambda d: (int(d['CoursePrefix']), int(d['CourseNumberPrefix'])), calpass.executeSelect(sql)))
+            answer = list()
+            for row in calpass.executeSelect(sql):
+                answer.append(tuple(row['CoursePrefix'], row['CourseNumberPrefix']))
             if len(answer) == 0:
                 print("Sorry, I don't know the answer.")
             else:
@@ -103,7 +109,7 @@ def fetch_section_answer(var_map, intent_class):
                             WHERE Quarter = '{Quarter}'
                             AND CoursePrefix = '{PREFIX}'
                             AND CourseNumberPrefix = '{CourseNum}'"""
-            answer = list(map(lambda d: d['Teacher'], calpass.executeSelect(sql)))
+            answer = list(map(lambda d: d[0], calpass.executeSelect(sql)))
             if len(answer) == 0:
                 print("Sorry, I don't know the answer.")
             else:
@@ -125,7 +131,7 @@ def fetch_section_answer(var_map, intent_class):
                             AND CoursePrefix = '{PREFIX}'
                             AND CourseNumberPrefix = '{CourseNum}'
                             AND Number = '{Section}'"""
-            answer = list(map(lambda d: d[f"'{var}'"], calpass.executeSelect(sql)))
+            answer = list(map(lambda d: d[0], calpass.executeSelect(sql)))
             if len(answer) == 0:
                 print("Sorry, I don't know the answer.")
             else:
@@ -142,7 +148,10 @@ def fetch_section_answer(var_map, intent_class):
                                         AND CoursePrefix = '{PREFIX}'
                                         AND CourseNumberPrefix = '{CourseNum}'
                                         AND CourseType == '{CourseType}'"""
-            answer = list(map(lambda d: (d['Days'], d['StartTime'], d['EndTime']), calpass.executeSelect(sql)))
+            # answer = list(map(lambda d: (d['Days'], d['StartTime'], d['EndTime']), calpass.executeSelect(sql)))
+            answer = list()
+            for row in calpass.executeSelect(sql):
+                answer.append(tuple(row['Days'], row['StartTime'], row['EndTime']))
             if len(answer) == 0:
                 print("Sorry, I don't know the answer.")
             else:
@@ -156,7 +165,7 @@ def fetch_section_answer(var_map, intent_class):
                             WHERE Quarter = '{Quarter}'
                             AND CoursePrefix = '{PREFIX}'
                             AND CourseNumberPrefix = '{CourseNum}'"""
-            answer = list(map(lambda d: d['Count'], calpass.executeSelect(sql)))
+            answer = list(map(lambda d: d[0], calpass.executeSelect(sql)))
             if len(answer) == 0:
                 print("Sorry, I don't know the answer.")
             else:
@@ -178,7 +187,7 @@ def fetch_course_answer(var_map, intent_class):
     sql = f"""SELECT {var} FROM Course 
                         WHERE Prefix = '{PREFIX}'
                         AND Number = '{CourseNum}'"""
-    answer = list(map(lambda d: d[f"'{var}'"], calpass.executeSelect(sql)))
+    answer = list(map(lambda d: d[0], calpass.executeSelect(sql)))
 
     # print output
     if len(answer) == 0:
