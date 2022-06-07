@@ -70,8 +70,8 @@ def read_stat_prof():
                 df.loc[len(df.index)] = [name, office, phone, email, oh, dept]
 
         # remove '@calpoly.edu' from Email column
-        df['Email'] = df['Email'].str.replace('@calpoly.edu', '') 
-        
+        df['Email'] = df['Email'].str.replace('@calpoly.edu', '')
+
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm", False)
 
@@ -182,7 +182,13 @@ def add_title(df, url, updateNames):
                 continue
 
             personTitle = row.find('td', attrs={'class':'personTitle'}).string
-          
+            if personTitle == 'Instr Fac AY':
+                personTitle = 'Instructor'
+            if personTitle == 'Lecturer AY':
+                personTitle = 'Lecturer'
+            if personTitle.startswith('Dept Chair'):
+                personTitle = 'Dept Chair'
+
             personAlias = row.find('td', attrs={'class':'personAlias'}).string.strip()
             
             titlesByName[personName] = personTitle
