@@ -78,11 +78,16 @@ def check_section(section, year, quarter, default_teacher):
     except:
         return None, teacher
 
+    # formatting teacher names (last, first -> first last)
+    teacher = teacher.split(", ")[::-1]
+    teacher = " ".join(teacher)
+    teacher = teacher.strip()
+
     section_object = Section(
         course_prefix=course_prefix.strip(), 
         course_number_prefix=course_number_prefix.strip(),
         number=course_section.strip(),
-        teacher=teacher.strip(),
+        teacher=teacher,
         section_type=course_type.strip(),
         days=course_days.strip(),
         start_time=start_time.strip(),
