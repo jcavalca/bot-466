@@ -212,8 +212,7 @@ class Bagging:
         preds = [p[0] for p in preds]
         
         # If all models disagree, choose GaussianNB
-        print(preds, final_choice)
-        if preds.count(final_choice) == 1:
+        if preds.count(final_choice[0]) == 1:
             return [preds[0]]
 
         return final_choice

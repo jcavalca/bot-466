@@ -170,12 +170,12 @@ def main():
         # Tokenize input
         tokens = [token.lower() for token in wordpunct_tokenize(user_input)]
         
-        print(tokens, user_input)
         var_string, var_map = tagger.key_word_map(tokens, user_input)
-        print(var_string, var_map)
+
+        tokens = var_string.split()
 
         # Figure out intent
-        intent_class = tagger.predict(var_string.split())
+        intent_class = tagger.predict(tokens)
         
         # Return answer
         if intent_class in [0, 1, 7, 11, 12, 13, 18]:
