@@ -72,6 +72,9 @@ def read_stat_prof():
         # remove '@calpoly.edu' from Email column
         df['Email'] = df['Email'].str.replace('@calpoly.edu', '')
 
+        # format phone column
+        df['Phone'] = df['Phone'].map(lambda x: "1.{}.{}.{}".format(x[:3],x[3:7],x[7:]), na_action='ignore')
+        
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm", False)
 
@@ -143,7 +146,11 @@ def read_cs_prof():
       
         df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)
         df.rename(columns={'How to Connnect':'HowToConnect'}, inplace=True)
-
+        
+        # format phone column
+        df['Phone'] = df['Phone'].map(lambda x: str(x), na_action='ignore')
+        df['Phone'] = df['Phone'].map(lambda x: "1.{}.{}.{}".format(x[:3],x[3:7],x[7:]), na_action='ignore')
+        
         # add department column
         df['Department'] = 'CSSE'
 
