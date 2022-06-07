@@ -71,9 +71,9 @@ def read_stat_prof():
 
         # remove '@calpoly.edu' from Email column
         df['Email'] = df['Email'].str.replace('@calpoly.edu', '')
-
+       
         # format phone column
-        df['Phone'] = df['Phone'].map(lambda x: "1.{}.{}.{}".format(x[:3],x[3:7],x[7:]), na_action='ignore')
+        df['Phone'] = df['Phone'].str.replace(r'^(\d{3})(\d{3})(\d+)$', r'1.\1.\2.\3', regex=True)
         
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm", False)
@@ -146,13 +146,13 @@ def read_cs_prof():
       
         df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)
         df.rename(columns={'How to Connnect':'HowToConnect'}, inplace=True)
-        
-        # format phone column
-        df['Phone'] = df['Phone'].map(lambda x: str(x), na_action='ignore')
-        df['Phone'] = df['Phone'].map(lambda x: "1.{}.{}.{}".format(x[:3],x[3:7],x[7:]), na_action='ignore')
-        
+
         # add department column
         df['Department'] = 'CSSE'
+
+        # format phone column
+        df['Phone'] = df['Phone'].map(lambda x: str(x), na_action='ignore')
+        df['Phone'] = df['Phone'].str.replace(r'^(\d{3})(\d{3})(\d+)$', r'1.\1.\2.\3', regex=True)
 
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm", True)
@@ -233,7 +233,7 @@ def populate_teacher(connection, df):
         with connection.cursor() as cursor:
             # create Teacher table if it doesn't exist
             cursor.execute("CREATE TABLE IF NOT EXISTS Teacher \
-            (Name VARCHAR(45) PRIMARY KEY, Department VARCHAR(5), Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), \
+            (Name VARCHAR(45) PRIMARY KEY, Department VARCHAR(5), Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(14), \
             Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
             
             # iterate through df and insert row by row
