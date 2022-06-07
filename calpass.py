@@ -1,12 +1,11 @@
-from ast import keyword
-from audioop import reverse
-from lib2to3.pgen2 import token
 import string
 import pymysql
 from nltk.tokenize import wordpunct_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+import db
 from models import Bagging, variables, corpus_training
+import fetch_answer as fa
 
 class Tagger:
     def __init__(self):
@@ -143,9 +142,9 @@ class Tagger:
 
     def getVariable(self, variable, table, whereVar=None, whereVal=None):
         if whereVar is None and whereVal is None:
-            vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
+            vars = db.executeSelect(f"""SELECT DISTINCT {variable} FROM {table}""")
         else:
-            vars = executeSelect(f"""SELECT DISTINCT {variable} FROM {table} WHERE {whereVar} = "{whereVal}" """)
+            vars = db.executeSelect(f"""SELECT DISTINCT {variable} FROM {table} WHERE {whereVar} = "{whereVal}" """)
 
         return [str(var[0]).lower() for var in vars if var[0]]
 
@@ -154,18 +153,6 @@ class Tagger:
         return self.classifier.predict(X_test)[0]
 
 
-def executeSelect(query):
-    connection = pymysql.connect(
-        user="jcavalca466",
-        password="jcavalca466985",
-        host="localhost",
-        db="jcavalca466",
-        port=9090,  # comment out this if running on frank
-    )
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-    connection.commit()
-    return cursor.fetchall()
 
 def main():
     print("Welcome to CalPass!")
@@ -188,15 +175,15 @@ def main():
         print(var_string, var_map)
 
         # Figure out intent
-        intent_class = tagger.predict(var_string)
+        intent_class = tagger.predict(var_string.split())
         
         # Return answer
         if intent_class in [0, 1, 7, 11, 12, 13, 18]:
-            fetch_answer.fetch_teacher_answer(var_map, intent_class)
+            fa.fetch_teacher_answer(var_map, intent_class)
         if intent_class in [2, 3, 4, 5, 6, 8, 15, 16, 17, 19]:
-            fetch_answer.fetch_section_answer(var_map, intent_class)
+            fa.fetch_section_answer(var_map, intent_class)
         if intent_class in [9, 10, 14]:
-            fetch_answer.fetch_course_answer(var_map, intent_class)
+            fa.fetch_course_answer(var_map, intent_class)
 
 if __name__ == "__main__":
     main()
