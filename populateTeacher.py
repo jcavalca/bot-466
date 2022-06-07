@@ -1,276 +1,207 @@
-import pandas as pd, numpy as np, requests, sys, pymysql.cursors
-from bs4 import BeautifulSoup
-
-def read_stat_prof():
-        url = "https://statistics.calpoly.edu/content/directory#:~:text=F%204%3A10%2D6pm%20Zoom,See%20Canvas%20for%20Zoom%20Link."
-        myRequest = requests.get(url)
-        soup = BeautifulSoup(myRequest.text,"html.parser")
-        tables = soup.find_all('table')
-        admin = tables[0]
-        profs = tables[1]
-
-        df_cols = ['Name', 'Office', 'Phone', 'Email', 'OfficeHours', 'Department']
-        df = pd.DataFrame(columns = df_cols)
-
-        arows = admin.find_all('tr')
-        prows = profs.find_all('tr')
-        rows = arows + prows
-        
-        for i, row in enumerate(rows):
-            values = row.find_all('td')
-            if values:
-                # 1) GET NAME
-                # works for: <td>NAME</td>
-                # and: <td><a href=“…”><strong>NAME</strong></a></td>
-                name = values[0].string
-                
-                if not name:
-                   # works for: <td><p><a href=“…”><strong>NAME</strong></a></p></td>
-                   # and: <td><p><strong><a href=“..”.>NAME</a></strong><\p><\td> (but going to
-                   # except to un-nest the result)
-                   name = values[0].find_all('strong')
-                   
-                   if not name:
-                       # works for: <td><p><b>NAME</b></p></td>
-                       name = values[0].find_all('b')
-
-                   # To un-nest the  resulting list
-                   # for: <td><p><a href=“…”><strong>NAME</strong></a></p></td>
-                   # and: <td><p><b>NAME</b></p></td>
-                   try:
-                       name = ",".join([item for items in name for item in items])
-
-                   # for: <td><p><strong><a href=“..”.>NAME</a></strong><\p><\td> 
-                   except:
-                       name = ",".join([item.text for items in name for item in items])
-      
-                # 2) GET OFFICE 
-                office = values[1].text.strip()
-
-                # 3) GET iPHONE
-                phone = values[2].text.strip()
-                phone = '805' + phone.replace('-', '')
-
-                # 4) GET EMAIL
-                email = values[3].text.strip()
-
-                # 5) GET OFFICE HOURS                  
-                oh = values[4].find_all('strong')
-                oh = ", ".join([item.strip() for items in oh for item in items])
-                oh = oh.replace(u'\xa0', ' ')
-                if oh.endswith(", TRF ("):
-                    oh = oh[:-len(", TRF (")]
-                if oh.endswith(", TRF"):
-                    oh = oh[:-len(", TRF")]
-
-                # 6) ADD DEPARTMENT
-                dept = 'STAT'
-
-                # Add to datafame 
-                df.loc[len(df.index)] = [name, office, phone, email, oh, dept]
-
-        # remove '@calpoly.edu' from Email column
-        df['Email'] = df['Email'].str.replace('@calpoly.edu', '')
-
-        # format phone column
-        df['Phone'] = df['Phone'].map(lambda x: "1.{}.{}.{}".format(x[:3],x[3:7],x[7:]), na_action='ignore')
-        
-        # add title column
-        df = add_title(df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm", False)
-
-        return df
+import db
 
 
-def read_cs_prof():
-        url = "http://frank.ored.calpoly.edu/CSSESpring2022.htm"
-        df = pd.read_html(url, skiprows = 2, header=0)[0]
+def fetch_teacher_answer(var_map, intent_class):
+    name = var_map.get('[CSSE-Faculty]')
 
-        # clean dataframe 
-        df = df.dropna(axis=1, how='all')
-        df = df.dropna(axis=0, how='all')
-        df = df.iloc[:-3]
+    # 0: "What's the room for [CSSE-Faculty] office hours?"
+    if intent_class == 0:
+        var = 'Room'
+    # 1: "What building is [CSSE-Faculty] office hours?"
+    if intent_class == 1:
+        var = 'Building'
+    # 7: "What time is [CSSE-Faculty] office hours?"
+    if intent_class == 7:
+        var = 'OfficeHours'
+    # 11: "What is [CSSE-Faculty]'s email?"
+    if intent_class == 11:
+        var = 'Email'
+    # 12: "What is [CSSE-Faculty]'s phone?"
+    if intent_class == 12:
+        var = 'Phone'
+    # 13: "How can I reach [CSSE-Faculty]?"
+    if intent_class == 13:
+        var = 'HowToConnect'
+    # 18: "What's the title of [CSSE-Faculty]?"
+    if intent_class == 18:
+        var = 'Title'
 
-        # clean dataframe values
-        df = df.applymap(lambda x: " ".join(x.strip().split()) if isinstance(x, str) else x)
-        df['Email'] = df['Email'].str.replace('@', '')
-        
-        # add full phone number (instead of last 5 digits)
-        df['Phone'].replace('none', np.nan, inplace=True)
-        df['Phone'] = "80575" + df.Phone.map(str, na_action='ignore')
+    # sql query
+    sql = f"""SELECT {var} FROM Teacher WHERE Name = '{name}'"""
+    answer = list(map(lambda d: d[0], db.executeSelect(sql)))
 
-        # convert Monday, Tuesday, Wednesday, ... to Office Hours (ex: MTW 3:00-4:00 pm)
-        df['OfficeHours'] = ""
-        for i, row in df.iterrows():
-            # key: time (ie 3:00-4:00 pm) and value: days of week (ie "MWF")
-            officehrs = {}
-            if pd.notna(row['Monday']):
-                key = clean_oh(row['Monday'])
-                if key:
-                    officehrs[key] = "M"
-            if pd.notna(row['Tuesday']):
-                key = clean_oh(row['Tuesday'])
-                if key:
-                    if key not in officehrs:
-                        officehrs[key] = "T"
-                    else:
-                        officehrs[key] = officehrs.get(key) + "T"
-            if pd.notna(row['Wednesday']):
-                key = clean_oh(row['Wednesday'])
-                if key: 
-                    if key not in officehrs:
-                        officehrs[key] = "W"
-                    else:
-                        officehrs[key] = officehrs.get(key) + "W"
-            if pd.notna(row['Thursday']):
-                key = clean_oh(row['Thursday'])
-                if key:
-                    if key not in officehrs:
-                        officehrs[key] = "R"
-                    else:
-                        officehrs[key] = officehrs.get(key) + "R"
-            if pd.notna(row['Friday']):
-                key = clean_oh(row['Friday'])
-                if key: 
-                    if key not in officehrs:
-                        officehrs[key] = "F"
-                    else:
-                        officehrs[key] = officehrs.get(key) + "F"
+    # print output
+    if len(answer) == 0 or answer is None:
+        print("Sorry, I don't know the answer.")
+    else:
+        if intent_class == 0 or intent_class == 1:
+            print(f"""{name}'s {var.lower()} for office hours is {var} {answer[0]}.""")
+        if intent_class == 7:
+            print(f"""{name}'s office hours are {answer[0]}.""")
+        if intent_class == 11:
+            print(f"""{name}'s {var.lower()} is {answer[0]}@calpoly.edu.""")
+        if intent_class == 12 or intent_class == 18:
+            print(f"""{name}'s {var.lower()} is {answer[0]}.""")
+        if intent_class == 13:
+            print(f"""The best way to connect with {name} is {answer[0].lower()}.""")
 
-            # create string from dict -> {'3:00-4:00pm': 'MWF', '10:00-12:00pm': 'TR'} -> "MWF 3:00-4:00pm, TR 10:00-12:00pm"
-            oh_string = ""
-            for key, value in officehrs.items():
-                text = value + " " + key + ", "
-                oh_string += text
-            oh_string = oh_string.rstrip(', ')
-            row['OfficeHours'] = oh_string
-      
-        df.drop(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], axis=1, inplace=True)
-        df.rename(columns={'How to Connnect':'HowToConnect'}, inplace=True)
-        
-        # format phone column
-        df['Phone'] = df['Phone'].map(lambda x: str(x), na_action='ignore')
-        df['Phone'] = df['Phone'].map(lambda x: "1.{}.{}.{}".format(x[:3],x[3:7],x[7:]), na_action='ignore')
-        
-        # add department column
-        df['Department'] = 'CSSE'
 
-        # add title column
-        df = add_title(df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm", True)
+def fetch_section_answer(var_map, intent_class):
+    # Determine quarter
+    if var_map.get('[Quarter]') is None:
+        quarter = 'Spring'
+    else:
+        quarter = var_map.get('[Quarter]')
 
-        return df
+    # 3: "Which courses are [CSSE-Faculty] teaching [Quarter] quarter?"
+    if intent_class == 3:
+        faculty = var_map.get('[CSSE-Faculty]')
+        print(quarter, faculty)
+        sql = f"""SELECT CoursePrefix, CourseNumberPrefix FROM Section 
+                    WHERE Teacher = '{faculty}'
+                    AND Quarter = '{quarter}'"""
+        print(sql)
+        answer = list(map(lambda d: (d[0], d[1], d[2]), db.executeSelect(sql)))
+        #answer = list()
+        #for row in db.executeSelect(sql):
+        #    answer.append(tuple(row['CoursePrefix'], row['CourseNumberPrefix'], row['Number']))
+        if len(answer) == 0 or answer is None:
+            print("Sorry, I don't know the answer.")
+        else:
+            courses = ", ".join([f"{item[0]} {item[1]}-{item[2]}" for item in answer])
+            print(f"""{faculty} is teaching the following courses in {quarter} quarter: {courses}.""")
 
-def clean_oh(txt):
-        clean_txt = txt.replace(" ", "").replace(":00", "")
-        # remove certain strings
-        clean_txt = clean_txt.replace("orbyappt.", "").replace("NoScheduledOfficeHours", "").replace("orbyappointment", "")
-        # add space after "M" -> '92-333:10-11AM14-213:3-4PM ' -> '92-333:10-11AM 14-213:3-4PM'
-        clean_txt = clean_txt.replace("M", "M ").strip()
-        return clean_txt            
+    else:
+        prefix = var_map.get('[PREFIX]')
 
-def add_title(df, url, updateNames):
-        myRequest = requests.get(url)
-        soup = BeautifulSoup(myRequest.text,"html.parser")
-        table = soup.find_all('table')[0]
-         
-        # Store titles in two dictionaries: 1 were the keys are the names
-        # and the 2nd were keys are the emails
-        # majority works just by email
-        # but can't just do by email since there is a discreptancy for Eckhardt,
-        # Christian -> eckhardt vs cekhardt
-        titlesByName = {}
-        titlesByAlias = {}
-
-        rows = table.find_all('tr')
-        for row in rows:
-            personNameHTML = row.find('td', attrs={'class':'personName'})
-            if personNameHTML is not None:
-                personName = " ".join(personNameHTML.string.strip().split())
+        # 4: "What [PREFIX] courses are offered [Quarter] quarter?"
+        # 5: "Which [PREFIX] courses start at [Time] [Quarter] quarter?"
+        # 6: "Which [PREFIX] courses end at [Time] [Quarter] quarter?"
+        if intent_class == 4 or intent_class == 5 or intent_class == 6:
+            generic_sql = f"""SELECT DISTINCT CoursePrefix, CourseNumberPrefix FROM Section 
+                                    WHERE CoursePrefix = '{prefix}'
+                                    AND Quarter = '{quarter}'"""
+            time = var_map.get('[Time]')
+            if intent_class == 5:
+                add = f"""AND StartTime = '{time}'"""
+            elif intent_class == 6:
+                add = f"""AND EndTime = '{time}'"""
             else:
-                continue
+                add = ""
+            sql = f"""{generic_sql}\t{add}"""
+            answer = list(map(lambda d: (int(d[0]), int(d[1])), db.executeSelect(sql)))
+            #answer = list()
+            #for row in db.executeSelect(sql):
+            #    answer.append(tuple(row['CoursePrefix'], row['CourseNumberPrefix']))
+            if len(answer) == 0 or answer is None:
+                print("Sorry, I don't know the answer.")
+            else:
+                courses = ", ".join([f"{item[0]} {item[1]}" for item in answer])
+                if intent_class == 4:
+                    print(f"""The following {prefix} courses are offered {quarter} quarter: {courses}.""")
+                if intent_class == 5:
+                    print(f"""The following {prefix} courses start at {time} {quarter} quarter: {courses}.""")
+                if intent_class == 6:
+                    print(f"""The following {prefix} courses end at {time} {quarter} quarter: {courses}.""")
 
-            personTitle = row.find('td', attrs={'class':'personTitle'}).string
-            if personTitle == 'Instr Fac AY':
-                personTitle = 'Instructor'
-            if personTitle == 'Lecturer AY':
-                personTitle = 'Lecturer'
-            if personTitle.startswith('Dept Chair'):
-                personTitle = 'Dept Chair'
+        course_num = var_map.get('[CourseNum]')
 
-            personAlias = row.find('td', attrs={'class':'personAlias'}).string.strip()
-            
-            titlesByName[personName] = personTitle
-            titlesByAlias[personAlias] = personTitle
-        
-        # add titles to df (either by name or by email)
-        df["Title"] = ""
-        for index, row in df.iterrows():
-            if row['Email'] in titlesByAlias.keys():
-                row['Title'] = titlesByAlias.get(row['Email'])
-            if row['Name'] in titlesByName.keys():
-                row['Title'] = titlesByName.get(row['Name'])
-      
-        # change names from 'Last, First' -> 'First Last'  
-        if updateNames:
-            df['Name'] = df['Name'].apply(lambda x: " ".join(x.split(", ")[::-1]) if isinstance(x, str) else x)
+        # 2: "Who is teaching [PREFIX] [CourseNum] [Quarter] quarter?"
+        if intent_class == 2:
+            sql = f"""SELECT DISTINCT Teacher FROM Section 
+                            WHERE Quarter = '{quarter}'
+                            AND CoursePrefix = '{prefix}'
+                            AND CourseNumberPrefix = '{course_num}'"""
+            answer = list(map(lambda d: d[0], db.executeSelect(sql)))
+            if len(answer) == 0 or answer is None:
+                print("Sorry, I don't know the answer.")
+            else:
+                print(f"""The following faculty teach {prefix} {course_num} {quarter} quarter: {", ".join(answer)}.""")
 
-        # see which teachers weren't included in the Instructors list and don't have a title
-        # print(df.loc[df['Title'] == ""])      
-        return df            
+        # 16: "What's the room for [PREFIX][CourseNum]-[Section] [Quarter] quarter?"
+        # 17: "What's the building for [PREFIX][CourseNum]-[Section] [Quarter] quarter?"
+        # 19: "What's the type of [PREFIX][CourseNum]-[Section] [Quarter] quarter?"
+        if intent_class == 16 or intent_class == 17 or intent_class == 19:
+            section = var_map.get('[Section]')
+            if intent_class == 16:
+                var = 'Room'
+            if intent_class == 17:
+                var = 'Building'
+            if intent_class == 19:
+                var = 'Type'
+            sql = f"""SELECT {var} FROM Section 
+                            WHERE Quarter = '{quarter}'
+                            AND CoursePrefix = '{prefix}'
+                            AND CourseNumberPrefix = '{course_num}'
+                            AND Number = '{section}'"""
+            answer = list(map(lambda d: d[0], db.executeSelect(sql)))
+            if len(answer) == 0 or answer is None:
+                print("Sorry, I don't know the answer.")
+            else:
+                if intent_class == 16 or intent_class == 17:
+                    print(f"""The {var.lower()} for {prefix} {course_num}-{section} is {var} {answer[0]}.""")
+                if intent_class == 19:
+                    print(f"""{prefix} {course_num}-{section} is a {answer[0]}.""")
 
-def sqlquote(value):
-    """Naive SQL quoting
-    All values except NULL are returned as SQL strings in single quotes,
-    with any embedded quotes doubled.
-    """
-    if value is None:
-         return 'NULL'
-    return "'{}'".format(str(value).replace("'", "''")) 
+        # 8: "When is [PREFIX] [CourseNum] [CourseType] offered [Quarter] quarter?"
+        if intent_class == 8:
+            course_type = var_map.get('[CourseType]')
+            sql = f"""SELECT Days, StartTime, EndTime FROM Section 
+                                        WHERE Quarter = '{quarter}'
+                                        AND CoursePrefix = '{prefix}'
+                                        AND CourseNumberPrefix = '{course_num}'
+                                        AND Type == '{course_type}'"""
+            answer = list(map(lambda d: (d[0], d[1], d[2]), db.executeSelect(sql)))
+            # answer = list()
+            # for row in db.executeSelect(sql):
+            #    answer.append(tuple(row['Days'], row['StartTime'], row['EndTime']))
+            if len(answer) == 0 or answer is None:
+                print("Sorry, I don't know the answer.")
+            else:
+                times = ", ".join([f"{item[0]} {item[1]}-{item[2]}" for item in answer])
+                print(
+                    f"""{prefix} {course_num} {course_type}s {quarter} quarter are offered during the following times: {times}.""")
 
- 
-def populate_teacher(connection, df):
-        df = df.replace([np.nan], [None])
-        df = df.replace([''], [None])
-        with connection.cursor() as cursor:
-            # create Teacher table if it doesn't exist
-            cursor.execute("CREATE TABLE IF NOT EXISTS Teacher \
-            (Name VARCHAR(45) PRIMARY KEY, Department VARCHAR(5), Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), \
-            Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
-            
-            # iterate through df and insert row by row
-            for i, row in df.iterrows():
-                building, room = row['Office'].split("-")
-                sql = "INSERT INTO Teacher VALUES (" + sqlquote(row['Name']) + ", " + sqlquote(row['Department']) + ", " + sqlquote(room) + \
-                ", " + sqlquote(building) + ", " + sqlquote(row['Phone']) + ", " + sqlquote(row['Email']) + \
-                ", " + sqlquote(row['Title']) + ", " + sqlquote(row['OfficeHours']) + ", " + sqlquote(row['HowToConnect']) + ");"
-                cursor.execute(sql)
-            
-            connection.commit()
-
-
-def main():
-        # Scrape professor info into a pandas df
-        stat_df = read_stat_prof()
-        cs_df = read_cs_prof()
-        all_df = pd.concat([stat_df, cs_df], ignore_index=True)
-        print(all_df)
-        
-        # Connect to the database (using Joao's database)
-        """connection = pymysql.connect(host='localhost',
-                                 user='aarsky466',
-                                 password='aarsky466985',
-                                 database='aarsky466',
-                                 cursorclass=pymysql.cursors.DictCursor)"""
-        
-        connection = pymysql.connect(
-                user     = "jcavalca466",
-                password = "jcavalca466985",
-                host     = "localhost",
-                db       = "jcavalca466")
-
-        # Populate Teacher SQL table
-        with connection:
-            populate_teacher(connection, all_df)
+        # 15: "How many sections of [PREFIX] [CourseNum] are offered [Quarter] quarter?"
+        if intent_class == 15:
+            sql = f"""SELECT COUNT(*) AS Count FROM Section 
+                            WHERE Quarter = '{quarter}'
+                            AND CoursePrefix = '{prefix}'
+                            AND CourseNumberPrefix = '{course_num}'"""
+            answer = list(map(lambda d: d[0], db.executeSelect(sql)))
+            if len(answer) == 0 or answer is None:
+                print("Sorry, I don't know the answer.")
+            else:
+                print(f"""There are {answer[0]} sections of {prefix} {course_num} offered {quarter} quarter.""")
 
 
-if __name__ == '__main__':
-        main()
+def fetch_course_answer(var_map, intent_class):
+    prefix = var_map.get('[PREFIX]')
+    course_num = var_map.get('[CourseNum]')
+
+    if intent_class == 9:
+        var = 'Prereq'
+    if intent_class == 10:
+        var = 'Units'
+    if intent_class == 14:
+        var = 'CourseDesc'
+
+    # sql query
+    sql = f"""SELECT {var} FROM Course 
+                        WHERE Prefix = '{prefix}'
+                        AND Number = '{course_num}'"""
+    answer = list(map(lambda d: d[0], db.executeSelect(sql)))
+
+    # print output
+    if len(answer) == 0 or answer is None:
+        print("Sorry, I don't know the answer.")
+    else:
+        # 9: "What are the pre requisites for [PREFIX] [CourseNum]?"
+        if intent_class == 9:
+            print(f"""The pre-requisites for {prefix}-{course_num} are {", ".join(answer)}.""")
+        # 10: "How many units is [PREFIX] [CourseNum]?"
+        if intent_class == 10:
+            print(f"""{prefix}-{course_num} is {answer[0]} units.""")
+        # 14: "What is the course description for [PREFIX] [CourseNum]?"
+        if intent_class == 14:
+            print(f"""The course description for {prefix}-{course_num} is {answer[0]}.""")
