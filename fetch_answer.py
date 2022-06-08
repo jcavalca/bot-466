@@ -25,27 +25,44 @@ def fetch_teacher_answer(var_map, intent_class):
     # 18: "What's the title of [CSSE-Faculty]?"
     if intent_class == 18:
         var = 'Title'
+    # 20: "What the location of [CSSE-Faculty]'s office hours?"
+    if intent_class == 20:
+        var = 'Building, Room'
 
     # sql query
     sql = f"""SELECT {var} FROM Teacher WHERE Name = '{name}'"""
-    answer = list(map(lambda d: d[0], db.executeSelect(sql)))
 
-    # print output
-    if len(answer) == 0 or answer[0] is None:
-        print("Sorry, I don't know the answer.")
+    if intent_class == 20:
+        answer = list(map(lambda d: (d[0], d[1]), db.executeSelect(sql)))
+
+        if len(answer) == 0 or answer is None:
+            print("Sorry, I don't know the answer.")
+        else:
+            if len(answer) > 1:
+                building_room = ", ".join([f"Building {item[0]} Room {item[1]}" for item in answer[:-1]]) + " and " + \
+                          f"Building {answer[-1][0]} Room {answer[-1][1]}"
+            else:
+                building_room = f"Building {answer[0][0]} Room {answer[0][1]}"
+            print(f"""{name}'s office hours are located in: {building_room}.""")
+
     else:
-        if intent_class == 0 or intent_class == 1:
-            print(f"""{name}'s {var.lower()} for office hours is {var} {answer[0]}.""")
-        if intent_class == 7:
-            print(f"""{name}'s office hours are {answer[0]}.""")
-        if intent_class == 11:
-            print(f"""{name}'s {var.lower()} is {answer[0]}@calpoly.edu.""")
-        if intent_class == 12:
-            print(f"""{name}'s {var.lower()} number is {answer[0]}.""")
-        if intent_class == 18:
-            print(f"""{name}'s {var.lower()} is {answer[0]}.""")
-        if intent_class == 13:
-            print(f"""The best way to connect with {name} is {answer[0].lower()}.""")
+        answer = list(map(lambda d: d[0], db.executeSelect(sql)))
+
+        if len(answer) == 0 or answer[0] is None:
+            print("Sorry, I don't know the answer.")
+        else:
+            if intent_class == 0 or intent_class == 1:
+                print(f"""{name}'s {var.lower()} for office hours is {var} {answer[0]}.""")
+            if intent_class == 7:
+                print(f"""{name}'s office hours are {answer[0]}.""")
+            if intent_class == 11:
+                print(f"""{name}'s {var.lower()} is {answer[0]}@calpoly.edu.""")
+            if intent_class == 12:
+                print(f"""{name}'s {var.lower()} number is {answer[0]}.""")
+            if intent_class == 18:
+                print(f"""{name}'s {var.lower()} is {answer[0]}.""")
+            if intent_class == 13:
+                print(f"""The best way to connect with {name} is {answer[0].lower()}.""")
 
 
 def fetch_section_answer(var_map, intent_class):
@@ -143,19 +160,37 @@ def fetch_section_answer(var_map, intent_class):
                 var = 'Building'
             if intent_class == 19:
                 var = 'Type'
+            if intent_class == 21:
+                var = 'Building, Room'
             sql = f"""SELECT {var} FROM Section 
                             WHERE Quarter = '{quarter}'
                             AND CoursePrefix = '{prefix}'
                             AND CourseNumberPrefix = '{course_num}'
                             AND Number = '{section}'"""
-            answer = list(map(lambda d: d[0], db.executeSelect(sql)))
-            if len(answer) == 0:
-                print("Sorry, I don't know the answer.")
+
+            if intent_class == 21:
+                answer = list(map(lambda d: (d[0], d[1]), db.executeSelect(sql)))
+                print(sql)
+                if len(answer) == 0 or answer is None:
+                    print("Sorry, I don't know the answer.")
+                else:
+                    if len(answer) > 1:
+                        building_room = ", ".join(
+                            [f"Building {item[0]} Room {item[1]}" for item in answer[:-1]]) + " and " + \
+                                        f"Building {answer[-1][0]} Room {answer[-1][1]}"
+                    else:
+                        building_room = f"Building {answer[0][0]} Room {answer[0][1]}"
+                    print(f"""{prefix.upper()} {course_num}-{section} is located in: {building_room}.""")
+
             else:
-                if intent_class == 16 or intent_class == 17:
-                    print(f"""The {var.lower()} for {prefix.upper()} {course_num}-{section} is {var} {answer[0]}.""")
-                if intent_class == 19:
-                    print(f"""{prefix.upper()} {course_num}-{section} is a {answer[0]}.""")
+                answer = list(map(lambda d: d[0], db.executeSelect(sql)))
+                if len(answer) == 0:
+                    print("Sorry, I don't know the answer.")
+                else:
+                    if intent_class == 16 or intent_class == 17:
+                        print(f"""The {var.lower()} for {prefix.upper()} {course_num}-{section} is {var} {answer[0]}.""")
+                    if intent_class == 19:
+                        print(f"""{prefix.upper()} {course_num}-{section} is a {answer[0]}.""")
 
         # 8: "When is [PREFIX] [CourseNum] [CourseType] offered [Quarter] quarter?"
         if intent_class == 8:
@@ -165,9 +200,9 @@ def fetch_section_answer(var_map, intent_class):
                                         AND CoursePrefix = '{prefix}'
                                         AND CourseNumberPrefix = '{course_num}'
                                         AND Type = '{course_type}'"""
-            
+
             answer = list(map(lambda d: (d[0], d[1], d[2]), db.executeSelect(sql)))
-            
+
             if len(answer) == 0 or answer[0] is None:
                 print("Sorry, I don't know the answer.")
             else:
