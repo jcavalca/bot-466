@@ -1,0 +1,11 @@
+What CSC courses are offered Spring quarter?|The following CSC courses are offered Spring quarter: CSC 225, CSC 231, CSC 248, CSC 305, CSC 307, CSC 309, CSC 313, CSC 320, CSC 325, CSC 349, CSC 365, CSC 366, CSC 369, CSC 378, CSC 406, CSC 430, CSC 445, CSC 450, CSC 454, CSC 466, CSC 468, CSC 481, CSC 570, CSC 582 and CSC 590.
+How many sections of CSC 466 are offered this quarter?|There are 2 sections of CSC 466 offered Spring quarter.
+Who teaches STAT 466 this quarter?|The following faculty teach STAT 466 Spring quarter: Hunter Glanz.
+How many units is STAT 252?|STAT 252 is 5 units.
+What are the pre-requisites for csc 365?|The pre-requisites for CSC 365 are CSC 248 or CSC 348; or CPE/CSC 102 and CPE/CSC 103 and MATH 248; or CPE/CSC 202 and CPE/CSC 203 and MATH 248.
+What is Beth Chance's email?|Beth Chance's email is bchance@calpoly.edu.
+Which courses is Samuel Frame teaching Spring quarter?|Samuel Frame is teaching the following courses in spring quarter: STAT 331, STAT 251, STAT 331 and STAT 531.
+When are CSC 466 lab offered this quarter?|CSC 466 lab Spring quarter is offered during the following times: MWF 12:10 PM-01:00 PM.
+What is CSC 365?|The course description for CSC 365 is 'Basic principles of database management systems (DBMS) and of DBMS application development.  DBMS objectives, systems architecture, database models with emphasis on Entity-Relationship and Relational models, data definition and manipulation languages, the Structured Query Language (SQL), database design, application development tools.  3 lectures, 1 laboratory.'.
+What STAT courses are offered fall quarter?|The following STAT courses are offered fall quarter: STAT 130, STAT 150, STAT 217, STAT 218, STAT 251, STAT 252, STAT 305, STAT 312, STAT 313, STAT 314, STAT 321, STAT 324, STAT 330, STAT 331, STAT 350, STAT 414, STAT 416, STAT 421, STAT 425, STAT 511, STAT 513, STAT 524, STAT 530, STAT 531 and STAT 542.
+
