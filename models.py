@@ -161,7 +161,18 @@ corpus_training = {
         "What type of class is [PREFIX][CourseNum]-[Section]?",
         "What type of class is [PREFIX][CourseNum] section [Section]?",
         "Is [PREFIX][CourseNum]-[Section] a lecture, a lab, or a seminar?",
-
+    ],
+    # Asks building and room for office hours given a teacher.
+    20: [
+        "Where is [CSSE-Faculty]'s office hours?",
+        "What is the location for [CSSE-Faculty]'s office hours?",
+        "Where are [CSSE-Faculty]'s office hours held in?",
+    ],
+    # Asks building and room given a section.
+    21: [
+        "What's the location for [PREFIX][CourseNum]-[Section] this quarter",
+        "Where does [PREFIX][CourseNum]-[Section] meet in [Quarter] quarter?",
+        "Where is [PREFIX][CourseNum]-[Section] taught in [Quarter] quarter?",
     ],
 }
 
