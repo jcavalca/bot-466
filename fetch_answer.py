@@ -217,7 +217,7 @@ def fetch_section_answer(var_map, intent_class):
                 else:
                     times = f"{answer[0][0]} {answer[0][1]}-{answer[0][2]}"
                 print(
-                    f"""{prefix.upper()} {course_num} {course_type}s {quarter} quarter are offered during the following times: {times}.""")
+                    f"""{prefix.upper()} {course_num} {course_type} {quarter.title()} quarter is offered during the following times: {times}.""")
 
         # 15: "How many sections of [PREFIX] [CourseNum] are offered [Quarter] quarter?"
         if intent_class == 15:
