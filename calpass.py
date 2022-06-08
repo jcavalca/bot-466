@@ -234,9 +234,9 @@ def main():
         intent_class = tagger.predict(tokens)
         
         # Return answer
-        if intent_class in [0, 1, 7, 11, 12, 13, 18]:
+        if intent_class in [0, 1, 7, 11, 12, 13, 18, 20]:
             fa.fetch_teacher_answer(var_map, intent_class)
-        if intent_class in [2, 3, 4, 5, 6, 8, 15, 16, 17, 19]:
+        if intent_class in [2, 3, 4, 5, 6, 8, 15, 16, 17, 19, 21]:
             fa.fetch_section_answer(var_map, intent_class)
         if intent_class in [9, 10, 14]:
             fa.fetch_course_answer(var_map, intent_class)
