@@ -70,7 +70,10 @@ def read_stat_prof():
                 df.loc[len(df.index)] = [name, office, phone, email, oh, dept]
 
         # remove '@calpoly.edu' from Email column
-        df['Email'] = df['Email'].str.replace('@calpoly.edu', '') 
+        df['Email'] = df['Email'].str.replace('@calpoly.edu', '')
+       
+        # format phone column
+        df['Phone'] = df['Phone'].str.replace(r'^(\d{3})(\d{3})(\d+)$', r'1.\1.\2.\3', regex=True)
         
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_76-CSM_curr.htm", False)
@@ -147,6 +150,10 @@ def read_cs_prof():
         # add department column
         df['Department'] = 'CSSE'
 
+        # format phone column
+        df['Phone'] = df['Phone'].map(lambda x: str(x), na_action='ignore')
+        df['Phone'] = df['Phone'].str.replace(r'^(\d{3})(\d{3})(\d+)$', r'1.\1.\2.\3', regex=True)
+
         # add title column
         df = add_title(df, "https://schedules.calpoly.edu/all_person_52-CENG_curr.htm", True)
 
@@ -182,7 +189,13 @@ def add_title(df, url, updateNames):
                 continue
 
             personTitle = row.find('td', attrs={'class':'personTitle'}).string
-          
+            if personTitle == 'Instr Fac AY':
+                personTitle = 'Instructor'
+            if personTitle == 'Lecturer AY':
+                personTitle = 'Lecturer'
+            if personTitle.startswith('Dept Chair'):
+                personTitle = 'Dept Chair'
+
             personAlias = row.find('td', attrs={'class':'personAlias'}).string.strip()
             
             titlesByName[personName] = personTitle
@@ -220,7 +233,7 @@ def populate_teacher(connection, df):
         with connection.cursor() as cursor:
             # create Teacher table if it doesn't exist
             cursor.execute("CREATE TABLE IF NOT EXISTS Teacher \
-            (Name VARCHAR(45) PRIMARY KEY, Department VARCHAR(5), Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(10), \
+            (Name VARCHAR(45) PRIMARY KEY, Department VARCHAR(5), Room VARCHAR(5), Building VARCHAR(5), Phone VARCHAR(14), \
             Email VARCHAR(45), Title VARCHAR(45), OfficeHours VARCHAR(65), HowToConnect VARCHAR(65) );")
             
             # iterate through df and insert row by row
