@@ -40,8 +40,10 @@ def fetch_teacher_answer(var_map, intent_class):
             print(f"""{name}'s office hours are {answer[0]}.""")
         if intent_class == 11:
             print(f"""{name}'s {var.lower()} is {answer[0]}@calpoly.edu.""")
-        if intent_class == 12 or intent_class == 18:
+        if intent_class == 12:
             print(f"""{name}'s {var.lower()} number is {answer[0]}.""")
+        if intent_class == 18:
+            print(f"""{name}'s {var.lower()} is {answer[0]}.""")
         if intent_class == 13:
             print(f"""The best way to connect with {name} is {answer[0].lower()}.""")
 
@@ -56,12 +58,10 @@ def fetch_section_answer(var_map, intent_class):
     # 3: "Which courses are [CSSE-Faculty] teaching [Quarter] quarter?"
     if intent_class == 3:
         faculty = var_map.get('[CSSE-Faculty]')
-        print(quarter, faculty)
         sql = f"""SELECT CoursePrefix, CourseNumberPrefix FROM Section 
                     WHERE Teacher = '{faculty}'
                     AND Quarter = '{quarter}'"""
-        print(sql)
-        answer = list(map(lambda d: (d[0], d[1], d[2]), db.executeSelect(sql)))
+        answer = list(map(lambda d: (d[0], d[1]), db.executeSelect(sql)))
 
         if len(answer) == 0:
             print("Sorry, I don't know the answer.")
@@ -69,9 +69,10 @@ def fetch_section_answer(var_map, intent_class):
             print(f"{faculty} does not teach any courses {quarter} quarter.")
         else:
             if len(answer) > 1:
-                courses = ", ".join([f"{item[0]} {item[1]}-{item[2]}" for item in answer[:-1]]) + " and " + answer[-1]
+                courses = ", ".join([f"{item[0]} {item[1]}" for item in answer[:-1]]) + " and " + \
+                          f"{answer[-1][0]} {answer[-1][1]}"
             else:
-                courses = answer[0]
+                courses = f"{answer[0][0]} {answer[0][1]}"
             print(f"""{faculty} is teaching the following courses in {quarter} quarter: {courses}.""")
 
     else:
@@ -93,18 +94,17 @@ def fetch_section_answer(var_map, intent_class):
                 add = ""
             sql = f"""{generic_sql}\t{add}"""
             answer = list(map(lambda d: (d[0], d[1]), db.executeSelect(sql)))
-            #answer = list()
-            #for row in db.executeSelect(sql):
-            #    answer.append(tuple(row['CoursePrefix'], row['CourseNumberPrefix']))
+
             if len(answer) == 0:
                 print("Sorry, I don't know the answer.")
             elif answer is None:
                 print(f"""No {prefix.upper()} courses {quarter} quarter follow that criteria.""")
             else:
                 if len(answer) > 1:
-                    courses = ", ".join([f"{item[0]} {item[1]}" for item in answer[:-1]]) + " and " + answer[-1]
+                    courses = ", ".join([f"{item[0]} {item[1]}" for item in answer[:-1]]) + " and " + \
+                              f"{answer[-1][0]} {answer[-1][1]}"
                 else:
-                    courses = answer[0]
+                    courses = f"{answer[0][0]} {answer[0][1]}"
                 if intent_class == 4:
                     print(f"""The following {prefix.upper()} courses are offered {quarter} quarter: {courses}.""")
                 if intent_class == 5:
@@ -174,9 +174,10 @@ def fetch_section_answer(var_map, intent_class):
                 print("Sorry, I don't know the answer.")
             else:
                 if len(answer) > 1:
-                    times = ", ".join([f"{item[0]} {item[1]}-{item[2]}" for item in answer[:-1]]) + " and " + answer[-1]
+                    times = ", ".join([f"{item[0]} {item[1]}-{item[2]}" for item in answer[:-1]]) + " and " + \
+                            f"{answer[-1][0]} {answer[-1][1]}-{answer[-1][2]}"
                 else:
-                    times = answer[0]
+                    times = f"{answer[0][0]} {answer[0][1]}-{answer[0][2]}"
                 print(
                     f"""{prefix.upper()} {course_num} {course_type}s {quarter} quarter are offered during the following times: {times}.""")
 
