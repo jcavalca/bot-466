@@ -12,10 +12,11 @@ class Tagger:
         self.createClassifier()
 
         '''
-        for teacher names the tokens are going to be separate for first and last names so we need a way to match those.
-        Potentially seperate them in 
+        Still need to implement:
+        [Subject] [Enrolled] [Wait] 
 
-        need to make sure everything in these lists are lowercase so they match in the mapping function
+        How are we going to match Subject? "A subject phrase like "AI", "Linear Analysis" or "Operating Systems""
+        enrolled and wait won't be in the search prompts right?
         '''
 
         # Teacher Variables
@@ -29,8 +30,13 @@ class Tagger:
         self.course_numbers = self.getVariable("Number", "Course")
         self.course_titles = self.getVariable("Title", "Course")
         self.course_descs = self.getVariable("CourseDesc", "Course")
+        self.course_types = ["lecture", "lab", "seminar"]
 
         # Section Variables
+
+        # Miscellaneous
+        self.days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+        self.quarters = ["fall", "winter", "spring", "summer"]
 
     '''
     input
@@ -64,31 +70,42 @@ class Tagger:
         var_map = {}
         reverse_var_map = {}
         var_str = "".join(list(char.lower() for char in usr_in))
+        print(tokens)
         for i, token in enumerate(tokens):
             token = token.lower()
-            # create possible name (ie "Paul Anderson" with a space)
+            # create possible two token tag (ie "Paul Anderson", "building 06", "section 5")
             next_t = ""
             if (i + 1) < len(tokens):
                 next_t = tokens[i+1]
-            name = token+" "+next_t
+            two_tok = token+" "+next_t
+            two_tok = two_tok.lower()
             # create possible PREFIX, CourseNum combo (ie "csc466" with no space)
             prefix = ""
             num = ""
             for char in token:
-                if char.isdigit:
+                if char.isdigit():
                     num += char
                 else:
                     prefix += char
-            if name in [name.lower() for name in self.csse_teacher_names]:
-                reverse_var_map[name] = '[CSSE-Faculty]'
-                name = name.split(" ")
+            # check for possible times
+            time = ""
+            if token == ":" and i > 0 and i < (len(tokens) - 1) and tokens[i-1].isdigit() and tokens[i+1][:2].isdigit():
+                time = tokens[i-1] + token + tokens[i+1]
+                if i < (len(tokens) - 2): 
+                    if tokens[i+2].lower() == "am" or tokens[i+2].lower() == "pm":
+                        time = time + " " + tokens[i+2]
+                var_map['[Time]'] = time
+                reverse_var_map[time] = '[Time]' 
+            elif two_tok in [name.lower() for name in self.csse_teacher_names]:
+                reverse_var_map[two_tok] = '[CSSE-Faculty]'
+                name = two_tok.split(" ")
                 name[0] = name[0][0].upper()+name[0][1:]
                 name[1] = name[1][0].upper()+name[1][1:]
                 name = " ".join(name)
                 var_map['[CSSE-Faculty]'] = name
-            elif name in self.csse_teacher_names:
-                reverse_var_map[name] = '[STAT-Faculty]'
-                name = name.split(" ")
+            elif two_tok in [name.lower() for name in self.stat_teacher_names]:
+                reverse_var_map[two_tok] = '[STAT-Faculty]'
+                name = two_tok.split(" ")
                 name[0] = name[0][0].upper()+name[0][1:]
                 name[1] = name[1][0].upper()+name[1][1:]
                 name = " ".join(name)
@@ -105,17 +122,53 @@ class Tagger:
             elif token in self.course_titles:
                 var_map['[Course]'] = token
                 reverse_var_map[token] = '[Course]'
+            elif token in self.course_types:
+                var_map['[CourseType]'] = token
+                reverse_var_map[token] = '[CourseType]'
             elif prefix in self.course_prefixes and num in self.course_numbers:
                 var_map['[PREFIX]'] = prefix
-                var_map['CourseNum'] = num
+                var_map['[CourseNum]'] = num
                 reverse_var_map[token] = '[PREFIX][CourseNum]'
+            elif two_tok.split(" ")[0] == 'section':
+                s_num = two_tok.split(" ")[1]
+                if s_num.isdigit():
+                    if len(s_num) == 1:
+                        s_num = "0"+s_num
+                    var_map['[Section]'] = s_num
+                    reverse_var_map[two_tok] = '[Section]'
+            elif two_tok.split(" ")[0] == 'building':
+                b_num = two_tok.split(" ")[1]
+                if b_num.isdigit():
+                    var_map['[Building]'] = b_num
+                    reverse_var_map[two_tok] = '[Building]'
+            elif two_tok.split(" ")[0] == 'room':
+                r_num = two_tok.split(" ")[1]
+                if r_num.isdigit():
+                    var_map['[Room]'] = r_num
+                    reverse_var_map[two_tok] = '[Room]'        
+            elif token in self.days or token[:-1] in self.days:
+                reverse_var_map[token] = '[Day]'
+                if token[-1].lower() == "s":
+                    token = token[:-1]
+                var_map['[Day]'] = token
+            elif token == "2021" or token == "2022":
+                var_map['[Year]'] = token
+                reverse_var_map[token] = '[Year]'
+            elif token in self.quarters:
+                var_map['[Quarter]'] = token
+                reverse_var_map[token] = '[Quarter]'
         
         for course in self.course_titles:
             c_title = "".join(char for char in course if char.isalnum() or char == " ")
             course = "".join(char.lower() for char in c_title)
             if course.lower() in var_str:
-                var_map['[Course]'] = c_title
-                reverse_var_map[course] = '[Course]'
+                all_accounted_for = True
+                for c in course.split(" "):
+                    if c not in var_str.split(" "):
+                        all_accounted_for = False
+                if all_accounted_for:
+                    var_map['[Course]'] = c_title
+                    reverse_var_map[course] = '[Course]'
 
         for tok in reverse_var_map.keys():
             var_str = var_str.replace(tok, reverse_var_map[tok])
@@ -153,13 +206,16 @@ class Tagger:
         return self.classifier.predict(X_test)[0]
 
 
-
 def main():
-    print("Welcome to CalPass!")
+    first = True
+    print("Welcome to CalPAss!")
     print("Please ask any questions you have. When you are done, type exit")
     tagger = Tagger()
     while True:
-
+        if first:
+            first = False
+        else:
+            print("\nAsk another question!")
         # Gets user input
         user_input = input()
 
