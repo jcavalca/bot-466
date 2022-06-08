@@ -107,6 +107,8 @@ corpus_training = {
     11: [
         "What is the email for [CSSE-Faculty]?",
         "What is [CSSE-Faculty]'s email?",
+        "What is the email for [STAT-Faculty]?",
+        "What is [STAT-Faculty]'s email?",
     ],
     # Asks for a teacher phone given a teacher.
     12: [
@@ -127,6 +129,7 @@ corpus_training = {
         "How is the course [PREFIX] [CourseNum]?",
         "What is [PREFIX] [CourseNum]?",
         "Describe for me [PREFIX] [CourseNum]?",
+        "What is the course description for [PREFIX] [CoureNum]?"
     ],
     # Asks number of section given a course and quarter.
     15: [
