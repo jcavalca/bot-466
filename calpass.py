@@ -70,7 +70,6 @@ class Tagger:
         var_map = {}
         reverse_var_map = {}
         var_str = "".join(list(char.lower() for char in usr_in))
-        print(tokens)
         for i, token in enumerate(tokens):
             token = token.lower()
             # create possible two token tag (ie "Paul Anderson", "building 06", "section 5")
