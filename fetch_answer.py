@@ -165,11 +165,9 @@ def fetch_section_answer(var_map, intent_class):
                                         AND CoursePrefix = '{prefix}'
                                         AND CourseNumberPrefix = '{course_num}'
                                         AND Type = '{course_type}'"""
-            print(sql)
+            
             answer = list(map(lambda d: (d[0], d[1], d[2]), db.executeSelect(sql)))
-            # answer = list()
-            # for row in db.executeSelect(sql):
-            #    answer.append(tuple(row['Days'], row['StartTime'], row['EndTime']))
+            
             if len(answer) == 0 or answer[0] is None:
                 print("Sorry, I don't know the answer.")
             else:
