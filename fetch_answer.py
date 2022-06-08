@@ -3,6 +3,8 @@ import db
 
 def fetch_teacher_answer(var_map, intent_class):
     name = var_map.get('[CSSE-Faculty]')
+    if name is None:
+        name = var_map.get('[STAT-Faculty]')
 
     # 0: "What's the room for [CSSE-Faculty] office hours?"
     if intent_class == 0:
@@ -75,9 +77,12 @@ def fetch_section_answer(var_map, intent_class):
     # 3: "Which courses are [CSSE-Faculty] teaching [Quarter] quarter?"
     if intent_class == 3:
         faculty = var_map.get('[CSSE-Faculty]')
+        if faculty is None:
+            faculty = var_map.get('[STAT-Faculty]')
         sql = f"""SELECT CoursePrefix, CourseNumberPrefix FROM Section 
                     WHERE Teacher = '{faculty}'
                     AND Quarter = '{quarter}'"""
+        #print(sql)
         answer = list(map(lambda d: (d[0], d[1]), db.executeSelect(sql)))
 
         if len(answer) == 0:
@@ -256,4 +261,4 @@ def fetch_course_answer(var_map, intent_class):
             print(f"""{prefix.upper()} {course_num} is {answer[0]} units.""")
         # 14: "What is the course description for [PREFIX] [CourseNum]?"
         if intent_class == 14:
-            print(f"""The course description for {prefix.upper()} {course_num} is {answer[0]}.""")
+            print(f"""The course description for {prefix.upper()} {course_num} is '{answer[0]}'.""")
