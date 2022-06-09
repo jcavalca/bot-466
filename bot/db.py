@@ -5,8 +5,8 @@ def executeSelect(query):
         user="jcavalca466",
         password="jcavalca466985",
         host="localhost",
-        db="jcavalca466",
-        port=9090,  # comment out this if running on frank
+        db="jcavalca466"
+        # port=9090,  # comment out this if running on frank
     )
     with connection.cursor() as cursor:
         cursor.execute(query)

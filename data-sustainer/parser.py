@@ -18,8 +18,8 @@ class Course:
                 user     = "jcavalca466",
                 password = "jcavalca466985",
                 host     = "localhost",
-                db       = "jcavalca466", 
-                port     = 9090
+                db       = "jcavalca466"
+                # port     = 9090
         )
         self.insert()
 
