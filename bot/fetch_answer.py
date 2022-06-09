@@ -1,4 +1,4 @@
-import db
+import db as db
 
 
 def fetch_teacher_answer(var_map, intent_class):

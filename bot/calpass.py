@@ -3,7 +3,7 @@ import pymysql
 from nltk.tokenize import wordpunct_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-import db
+import db as db
 from models import Bagging, variables, corpus_training
 import fetch_answer as fa
 
