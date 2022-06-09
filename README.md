@@ -12,4 +12,3 @@ This is a group project for CSC 466 Knowledge Discovery from Data. We are scrapi
 
 * **data-sustainer** : Directory responsible for scraping all data and populating our DB.
 * **bot** : Directory responsible for the implementation of our bot.
-* **testing** : see 'how_to_test.txt' for testing instructions
