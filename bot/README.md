@@ -10,6 +10,8 @@ Bot uses our MySQL DB to answer user queries using Machine Learning.
 * **lev_dist.py** : Stale file. Initially, was intended to be used for handling mispellings, but time constraint didn't allow for it.
 * **models.py** : Contains Bagging classifier implementation.
 * **test_cases.txt** : Contains all test cases used to test our bot's performance.
+* **test_split.py** : generates the test.in query file
+* **eval.py** : evaluates the accuracy of the tests
 
 ### Usage
 
