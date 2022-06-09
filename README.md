@@ -12,3 +12,5 @@ This is a group project for CSC 466 Knowledge Discovery from Data. We are scrapi
 
 * **data-sustainer** : Directory responsible for scraping all data and populating our DB.
 * **bot** : Directory responsible for the implementation of our bot.
+* **Final Report.pdf** : Our Final Report, can also be seen in our <a href="[about.html](https://docs.google.com/document/d/1U5LNif2LsUGXMlu6SrEaiWYk3VKiQEcTTyljk5ug3Vk/edit?usp=sharing)">Google docs<a>
+
