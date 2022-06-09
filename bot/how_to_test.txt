@@ -1,0 +1,4 @@
+python3 test_split.py
+python3 calpass.py < test.in > test.out
+python3 eval.py
+
