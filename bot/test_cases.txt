@@ -18,3 +18,13 @@ Which courses are Beth Chance teaching this quarter?|Beth Chance is teaching the
 Which room are Paul Anderson's office hours held in?|Paul Anderson's room for office hours is Room 222.
 Who is teaching CSC 466 on Summer?|The following faculty teach CSC 466 summer quarter: Paul Anderson.
 What are the pre requisites for CSC 325?|The pre-requisites for CSC 325 are Completion of GE Area A3 with a grade of C- or better; CPE/CSC 203; CSC 300 or PHIL 323.
+what is csc 357?|The course description for CSC 357 is C programming language from a system programming perspective.  Standard C language including operators, I/O functions, and data types in the context of system functions.  Unix commands, shell scripting, file system, editors.  3 lectures, 1 laboratory.  Crosslisted as CPE/CSC 357..
+who teaches stat312 in the fall?|The following faculty teach STAT 312 fall quarter: Nianpin Cheng, Jimmy Doi, James Oksanish and Heather Smith.
+When are Foaad Khosmood's office hours?|Foaad Khosmood's office hours are MTWF 4:10-5PM.
+How do I contact Christian Eckhardt?|Christian Eckhardt's email is ceckhard@calpoly.edu.
+What is the course description for CSC 466?|The course description for CSC 466 is Overview of modern knowledge discovery from data (KDD) methods and technologies.  Topics in data mining (association rules mining, classification, clustering), information retrieval, web mining.  Emphasis on use of KDD techniques in modern software applications.  3 lectures, 1 laboratory..
+What sections are available for CSC 101?|There are 0 sections of CSC 101 offered Spring quarter.
+How many units is CSC 466?|CSC 466 is 4 units.
+What is the room number of foaad khosmood?|Foaad Khosmood's room for office hours is Room 204.
+Does Paul Anderson teach any classes this quarter?|Paul Anderson is teaching the following courses in Spring quarter: CSC 570.
+what STAT classes are offered?|The following STAT courses are offered Spring quarter: STAT 130, STAT 217, STAT 218, STAT 251, STAT 252, STAT 302, STAT 312, STAT 313, STAT 321, STAT 323, STAT 324, STAT 331, STAT 334, STAT 350, STAT 365, STAT 405, STAT 419, STAT 423, STAT 427, STAT 431, STAT 434, STAT 441, STAT 466, STAT 470, STAT 513, STAT 523, STAT 524, STAT 531 and STAT 542.
